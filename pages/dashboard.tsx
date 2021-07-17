@@ -2,7 +2,7 @@ import { Overview } from "../components/overview";
 import { OverviewItem } from "../components/overview-item";
 import { SVG } from "../svg";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   const { barChart, database, shoppingCart } = SVG;
   const value = 800;
   return (
@@ -18,3 +18,5 @@ export const Dashboard = () => {
     </>
   );
 };
+
+export default Dashboard;
