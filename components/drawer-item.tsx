@@ -17,7 +17,7 @@ export const DrawerItem = ({
 }: DrawerItemProps) => {
   return (
     <li
-      className={`py-2 px-3 hover:bg-gray-300 ${
+      className={`py-2 px-3 hover:bg-gray-300 w-full ${
         isActive ? "bg-amber-100" : ""
       }`}
     >

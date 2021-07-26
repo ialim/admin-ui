@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Footer } from "../components/footer";
-import { Header } from "../components/header";
-import { SideNav } from "../components/side-nav";
+import { Footer } from "../footer";
+import { Header } from "../header";
+import { SideNav } from "../side-nav";
 
 interface PageProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export const Page = ({ children }: PageProps) => {
     <div className="bg-gray-100 max-w-md mx-auto">
       <div className="flex flex-col">
         <Header showSideNav={toggleSideNav} />
-        <main className=" h-screen">
+        <main className="">
             {showSideNav && (
               <div className="transition duration-1000 left-0">
                 <SideNav />
