@@ -5,6 +5,7 @@ export interface ModalProps {
   afterOpenModal: () => void;
   closeModal: () => void;
   modalIsOpen: boolean;
+  heading: string;
 }
 
 export const MyModal = ({
@@ -12,6 +13,7 @@ export const MyModal = ({
   modalIsOpen,
   afterOpenModal,
   closeModal,
+  heading,
 }: ModalProps) => {
   return (
     <div>
@@ -23,7 +25,7 @@ export const MyModal = ({
         className="bg-gray-100 max-w-sm mx-auto my-20 p-5"
       >
         <header className="flex flex-row justify-between px-3">
-          <h2>Add Variant</h2>
+          <h2>{heading}</h2>
           <button onClick={closeModal}>close</button>
         </header>
         {children}

@@ -101,9 +101,9 @@ const CREATE_PRODUCT_MUTATION = gql`
   }
 `;
 
-export const fetchSelectOptions = (query: DocumentNode) => {
+export const fetchSelectOptions = (query: DocumentNode, variables?: object) => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { data, error, loading } = useQuery(query);
+  const { data, error, loading } = useQuery(query, { variables, });
   return { data, error, loading };
 };
 

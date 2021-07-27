@@ -1,5 +1,4 @@
-import { gql, useMutation } from "@apollo/client";
-import Router from "next/router";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { fetchSelectOptions } from "../pages/add-products";
@@ -8,6 +7,8 @@ import { ModalProps, MyModal } from "./Modal";
 
 interface AddVariantModalProps extends ModalProps {
   productId: string;
+  slug: string;
+  productVariantId?: string;
 }
 
 type VariantFormInput = {
@@ -15,14 +16,21 @@ type VariantFormInput = {
   size: string;
   fragrance: string;
   type: string;
-  image?: any;
+  image?: string;
 };
 
 type CreateProductVariantInput = {
   name: string;
-//   asset?: any;
+  asset?: any;
   facetValues?: any[];
-  product: any;
+  product?: any;
+};
+
+type UpdateProductVariantInput = {
+  productVariantId?: string;
+  name: string;
+  asset?: any;
+  facetValues?: any[];
 };
 
 const defaultValues: VariantFormInput = {
@@ -30,11 +38,11 @@ const defaultValues: VariantFormInput = {
   type: "",
   fragrance: "",
   size: "",
-  image: {},
+  image: "",
 };
 
 const SELECT_FIELD_OPTIONS_QUERY = gql`
-  query SELECT_FIELD_OPTIONS_QUERY {
+  query SELECT_FIELD_OPTIONS_QUERY($id: ID) {
     Type: Facet(where: { name: "Type" }) {
       types: values(orderBy: { name: asc }) {
         value: id
@@ -53,18 +61,76 @@ const SELECT_FIELD_OPTIONS_QUERY = gql`
         label: name
       }
     }
+    Asset: allAssets(where: { product: { id: $id } }) {
+      value: id
+      label: altText
+    }
+  }
+`;
+
+const UPDATE_PRODUCT_VARIANT_MUTATION = gql`
+  mutation UPDATE_PRODUCT_VARIANT_MUTATION(
+    $productVariantId: ID!
+    $name: String
+    $asset: AssetWhereUniqueInput
+    $facetValues: [FacetValueWhereUniqueInput]
+  ) {
+    updateProductVariant(
+      id: $productVariantId
+      data: {
+        name: $name
+        asset: { connect: $asset }
+        facetValues: { connect: $facetValues }
+      }
+    ) {
+      name
+      Size: facetValues(where: { facet: { name: "Size" } }) {
+        size: name
+      }
+      Fragrance: facetValues(where: { facet: { name: "Fragrance" } }) {
+        fragrance: name
+      }
+      Type: facetValues(where: { facet: { name: "Type" } }) {
+        type: name
+      }
+      Image: asset {
+        image: altText
+      }
+    }
+  }
+`;
+
+const PRODUCT_VARIANT_QUERY = gql`
+  query PRODUCT_VARIANT_QUERY($id: ID) {
+    ProductVariant(where: { id: $id }) {
+      name
+      Size: facetValues(where: { facet: { name: "Size" } }) {
+        size: id
+      }
+      Fragrance: facetValues(where: { facet: { name: "Fragrance" } }) {
+        fragrance: id
+      }
+      Type: facetValues(where: { facet: { name: "Type" } }) {
+        type: id
+      }
+      Image: asset {
+        image: id
+      }
+    }
   }
 `;
 
 const CREATE_PRODUCT_VARIANT_MUTATION = gql`
   mutation CREATE_PRODUCT_VARIANT_MUTATION(
     $name: String
+    $asset: AssetWhereUniqueInput
     $facetValues: [FacetValueWhereUniqueInput]
     $product: ProductWhereUniqueInput
   ) {
-    createProduct(
+    createProductVariant(
       data: {
         name: $name
+        asset: { connect: $asset }
         facetValues: { connect: $facetValues }
         product: { connect: $product }
       }
@@ -78,14 +144,20 @@ const CREATE_PRODUCT_VARIANT_MUTATION = gql`
   }
 `;
 
-export const AddVariantModal = ({
+export const VariantModal = ({
   modalIsOpen,
   afterOpenModal,
   closeModal,
   productId,
+  slug,
+  productVariantId,
+  heading,
 }: AddVariantModalProps) => {
-  const selectOptions = fetchSelectOptions(SELECT_FIELD_OPTIONS_QUERY);
-
+  console.log("2: ", productVariantId);
+  const selectOptions = fetchSelectOptions(SELECT_FIELD_OPTIONS_QUERY, {
+    id: productId,
+  });
+  let operation: any, productVariant: any;
   const {
     register,
     handleSubmit,
@@ -103,26 +175,67 @@ export const AddVariantModal = ({
     }
   }, [isSubmitSuccessful, reset]);
 
-  const [createProductVariant, { loading, error, data }] = useMutation(
-    CREATE_PRODUCT_VARIANT_MUTATION
-  );
+  (productVariantId &&
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    (operation = useMutation(UPDATE_PRODUCT_VARIANT_MUTATION))) ||
+    (!productVariantId &&
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      (operation = useMutation(CREATE_PRODUCT_VARIANT_MUTATION)));
 
-  const onSubmit = async (data: VariantFormInput) => {
-    const { name, size, fragrance, type, image } = data;
+  productVariantId &&
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    (productVariant = useQuery(PRODUCT_VARIANT_QUERY, {
+      variables: { id: productVariantId },
+    }));
+
+  const queriedUpdateData: VariantFormInput = {
+    name: productVariant ? productVariant?.data?.ProductVariant?.name : "",
+    type: productVariant
+      ? productVariant?.data?.ProductVariant?.Type[0]?.type
+      : "",
+    fragrance: productVariant
+      ? productVariant?.data?.ProductVariant?.Fragrance[0]?.fragrance
+      : "",
+    size: productVariant
+      ? productVariant?.data?.ProductVariant?.Size[0]?.size
+      : "",
+    image: productVariant
+      ? productVariant?.data?.ProductVariant?.Image?.image
+      : "",
+  };
+
+  const [operateProductVariant, { loading, error, data }] = operation;
+
+  const onSubmit = async (recievedData: VariantFormInput) => {
+    const { name, size, fragrance, type, image } = recievedData;
 
     const createProductVariantInput: CreateProductVariantInput = {
       name,
+      asset: { id: image },
       facetValues: [{ id: size }, { id: fragrance }, { id: type }],
       product: { id: productId },
     };
-    console.log(createProductVariantInput)
-    const res = await createProductVariant({
-      variables: createProductVariantInput,
-    });
-    Router.push({
-      pathname: `product/${res.data.createProductVariant?.product?.slug}/${res.data.createProductVariant?.product?.id}`,
-    });
-    console.log(res);
+
+    const updateProductVariantInput: UpdateProductVariantInput = {
+      productVariantId,
+      name,
+      asset: { id: image },
+      facetValues: [{ id: size }, { id: fragrance }, { id: type }],
+    };
+
+    console.log(
+      productVariantId ? updateProductVariantInput : createProductVariantInput
+    );
+    try {
+      const res = await operateProductVariant({
+        variables: productVariantId
+          ? updateProductVariantInput
+          : createProductVariantInput,
+      });
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   if (selectOptions.loading) return <p>Loading...</p>;
@@ -132,21 +245,25 @@ export const AddVariantModal = ({
     Type: { types },
     Fragrance: { fragrances },
     Size: { sizes },
+    Asset,
   } = selectOptions.data;
   const typeOptions = [...types];
   const fragranceOptions = [...fragrances];
   const sizeOptions = [...sizes];
+  const assetOptions = [...Asset];
   return (
     <MyModal
       afterOpenModal={afterOpenModal}
       modalIsOpen={modalIsOpen}
       closeModal={closeModal}
+      heading={heading}
     >
-      <ErrorMessage error={error} />
+      {console.log("Modal: ", productVariantId)}
       <form
         className="flex flex-col space-y-5 mx-5 pt-5 "
         onSubmit={handleSubmit(onSubmit)}
       >
+        <ErrorMessage error={error} />
         <fieldset className="space-y-3" disabled={loading} aria-busy={loading}>
           <div className="flex flex-col space-y-1">
             <label htmlFor="name">Name:</label>
@@ -154,6 +271,7 @@ export const AddVariantModal = ({
               type="text"
               className="form-input w-full rounded-md"
               {...register("name", { required: "This is required" })}
+              value={queriedUpdateData?.name}
             />
             {errors?.name && <p>{errors.name.message}</p>}
           </div>
@@ -164,6 +282,7 @@ export const AddVariantModal = ({
                 required: "This is required",
               })}
               className="form-select rounded-md"
+              value={queriedUpdateData?.size}
             >
               {sizeOptions.map((option) => (
                 <option key={option.label} value={option.value}>
@@ -178,6 +297,7 @@ export const AddVariantModal = ({
             <select
               {...register("type", { required: "This is required" })}
               className="form-select rounded-md"
+              value={queriedUpdateData?.type}
             >
               {typeOptions.map((option) => (
                 <option key={option.label} value={option.value}>
@@ -194,6 +314,7 @@ export const AddVariantModal = ({
                 required: "This is required",
               })}
               className="form-select rounded-md"
+              value={queriedUpdateData?.fragrance}
             >
               {fragranceOptions.map((option) => (
                 <option key={option.label} value={option.value}>
@@ -204,20 +325,28 @@ export const AddVariantModal = ({
             {errors?.size && <p>{errors.size.message}</p>}
           </div>
 
-          {/* <div className="flex flex-col space-y-1">
-            <label htmlFor="slug">Image:</label>
-            <input
-              type="file"
-              className="form-input flex flex-col w-full rounded-md"
-              {...register("image")}
-              multiple={false}
-            />
-          </div> */}
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="image">Image:</label>
+            <select
+              {...register("image", {
+                required: "This is required",
+              })}
+              className="form-select rounded-md"
+              value={queriedUpdateData?.image}
+            >
+              {assetOptions.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errors?.image && <p>{errors.image.message}</p>}
+          </div>
         </fieldset>
 
         <input
           type="submit"
-          value="CREATE"
+          value={productVariantId ? "UPDATE" : "CREATE"}
           className="form-input py-2 rounded-md bg-gray-100 hover:bg-gray-200 tracking-widest"
         />
       </form>
