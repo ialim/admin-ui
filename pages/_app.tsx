@@ -1,11 +1,12 @@
 import "../styles/globals.css";
 import NProgress from "nprogress";
-import type { AppContext, AppProps } from "next/app";
+import type { AppContext, AppInitialProps, AppProps } from "next/app";
 import Router from "next/router";
 import { Page } from "../components/layout/index-page";
 import "../styles/nprogress.css";
 import { ApolloProvider } from "@apollo/client";
 import withData from "../lib/with-data";
+import App from "next/app";
 
 Router.events.on("routeChangeStart", () => NProgress.start());
 Router.events.on("routeChangeComplete", () => NProgress.done());
@@ -25,8 +26,8 @@ function MyApp({ Component, pageProps, apollo }: MyAppProps) {
   );
 }
 
-MyApp.getInitialProps = async ({ Component, ctx }: AppContext) => {
-  let pageProps: any = {};
+MyApp.getInitialProps = async ({ Component, ctx }: AppContext): Promise<AppInitialProps> => {
+  let pageProps: any = {}
   if (Component.getInitialProps) {
     pageProps = await Component.getInitialProps(ctx);
   }
@@ -34,4 +35,6 @@ MyApp.getInitialProps = async ({ Component, ctx }: AppContext) => {
   return { pageProps };
 };
 
-export default withData(MyApp);
+const MainApp = MyApp as unknown as typeof App
+
+export default withData(MainApp);

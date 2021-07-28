@@ -4,7 +4,8 @@ import { Button } from "./button";
 import { ErrorMessage } from "./error-message";
 import Modal from "react-modal";
 import { useState } from "react";
-import { VariantModal } from "./variant-modal";
+import { AddProductVariant } from "./add-product-variant";
+import { UpdateProductVariant } from "./update-product-variant";
 
 type SingleProductInput = {
   id: string;
@@ -81,13 +82,13 @@ export const SingleProduct = ({ id, slug }: SingleProductInput) => {
   };
 
   const onCreateClick = () => {
-    setProductVariantId("")
+    setProductVariantId("");
     console.log("create: ", productVariantId);
     openModal();
   };
 
   const onEditClick = (variantId: string) => {
-    setProductVariantId(variantId)
+    setProductVariantId(variantId);
     console.log("edit: ", productVariantId);
     openModal();
   };
@@ -95,15 +96,22 @@ export const SingleProduct = ({ id, slug }: SingleProductInput) => {
   return (
     <div className="mx-5 my-3">
       {modalIsOpen ? (
-        <VariantModal
-          afterOpenModal={afterOpenModal}
-          modalIsOpen={modalIsOpen}
-          closeModal={closeModal}
-          productId={id}
-          slug={slug}
-          productVariantId={productVariantId}
-          heading={productVariantId ? "Update Variant" : "Add Variant"}
-        />
+        productVariantId ? (
+          <UpdateProductVariant
+            afterOpenModal={afterOpenModal}
+            modalIsOpen={modalIsOpen}
+            closeModal={closeModal}
+            productVariantId={productVariantId}
+            productId={id}
+          />
+        ) : (
+          <AddProductVariant
+            afterOpenModal={afterOpenModal}
+            modalIsOpen={modalIsOpen}
+            closeModal={closeModal}
+            productId={id}
+          />
+        )
       ) : (
         ""
       )}

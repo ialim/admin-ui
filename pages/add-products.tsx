@@ -101,14 +101,8 @@ const CREATE_PRODUCT_MUTATION = gql`
   }
 `;
 
-export const fetchSelectOptions = (query: DocumentNode, variables?: object) => {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { data, error, loading } = useQuery(query, { variables, });
-  return { data, error, loading };
-};
-
 const AddProducts = () => {
-  const selectOptions = fetchSelectOptions(SELECT_FIELD_OPTIONS_QUERY);
+  const selectOptions = useQuery(SELECT_FIELD_OPTIONS_QUERY);
 
   let createProductInput: CreateProductInput = {
     name: "",
@@ -182,7 +176,6 @@ const AddProducts = () => {
   }, [isSubmitSuccessful, reset]);
 
   if (selectOptions.loading) return <p>Loading...</p>;
-  if (selectOptions.error) return <ErrorMessage error={selectOptions.error} />;
 
   const {
     Brand: { brands },
@@ -200,7 +193,7 @@ const AddProducts = () => {
         className="flex flex-col space-y-5 mx-5 pt-5 "
         onSubmit={handleSubmit(onSubmit)}
       >
-        <ErrorMessage error={error} />
+        <ErrorMessage error={error || selectOptions.error} />
         <fieldset className="space-y-3" disabled={loading} aria-busy={loading}>
           <div className="flex flex-col space-y-1">
             <label htmlFor="name">Name:</label>

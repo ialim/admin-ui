@@ -1,4 +1,4 @@
-import { SingleProduct } from "../../../components/SingleProduct";
+import { SingleProduct } from "../../../components/single-product";
 
 const ProductDetail = ({ query }: any) => {
   return (
