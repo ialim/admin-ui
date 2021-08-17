@@ -4,7 +4,7 @@ interface ButtonProps {
   onClick?: ()=> void
 }
 
-export const Button = ({ children, href, onClick }: ButtonProps) => {
+export const Button = ({ children, href, onClick}: ButtonProps) => {
   return (
     <div className="mt-4 mx-5">
       <a

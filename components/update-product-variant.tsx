@@ -1,5 +1,6 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { AddProductVariantProps } from "./add-product-variant";
+import { SINGLE_PRODUCT_QUERY } from "./single-product";
 import { VariantFormInput, VariantModal } from "./variant-modal";
 
 interface UpdateProductVariantProps extends AddProductVariantProps {
@@ -28,19 +29,8 @@ const UPDATE_PRODUCT_VARIANT_MUTATION = gql`
         facetValues: { connect: $facetValues }
       }
     ) {
+      id
       name
-      Size: facetValues(where: { facet: { name: "Size" } }) {
-        size: name
-      }
-      Fragrance: facetValues(where: { facet: { name: "Fragrance" } }) {
-        fragrance: name
-      }
-      Type: facetValues(where: { facet: { name: "Type" } }) {
-        type: name
-      }
-      Image: asset {
-        image: altText
-      }
     }
   }
 `;
@@ -118,6 +108,13 @@ export const UpdateProductVariant = ({
     try {
       const res = await updateProductVariant({
         variables: updateProductVariantInput,
+        optimisticResponse: {
+          updateProductVariant: {
+            id: updateProductVariantInput.productVariantId,
+            __typename: "ProductVariant",
+            name: updateProductVariantInput.name,
+          },
+        },
       });
       console.log(res);
     } catch (error) {

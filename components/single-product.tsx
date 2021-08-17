@@ -6,6 +6,7 @@ import Modal from "react-modal";
 import { useState } from "react";
 import { AddProductVariant } from "./add-product-variant";
 import { UpdateProductVariant } from "./update-product-variant";
+import { DeleteButton } from "./delete-button";
 
 type SingleProductInput = {
   id: string;
@@ -17,12 +18,13 @@ Modal.setAppElement("#mymodal");
 const DELETE_VARIANT_MUTTATION = gql`
   mutation DELETE_VARIANT_MUTTATION($id: ID!) {
     deleteProductVariant(id: $id) {
+      id
       name
     }
   }
 `;
 
-const SINGLE_PRODUCT_QUERY = gql`
+export const SINGLE_PRODUCT_QUERY = gql`
   query SINGLE_PRODUCT_QUERY($id: ID!) {
     Product(where: { id: $id }) {
       name
@@ -68,18 +70,9 @@ export const SingleProduct = ({ id, slug }: SingleProductInput) => {
     variables: { id },
   });
 
-  const [deleteProductVariant, result] = useMutation(DELETE_VARIANT_MUTTATION);
-
   if (loading) return <p>Loading...</p>;
   if (error) return <ErrorMessage error={error} />;
   const { Product } = data;
-
-  const onClick = async (variantId: string) => {
-    const res = await deleteProductVariant({
-      variables: { id: variantId },
-    });
-    console.log(res);
-  };
 
   const onCreateClick = () => {
     setProductVariantId("");
@@ -173,13 +166,17 @@ export const SingleProduct = ({ id, slug }: SingleProductInput) => {
                     )}
                   </div>
                 </div>
-                <div className="block">
-                  <Button href="#" onClick={() => onEditClick(variant.id)}>
+                <div className="block space-y-1">
+                  <button
+                    className="flex flex-row p-3 rounded-lg shadow-lg text-white uppercase tracking-wide font-semibold bg-gray-400 text-sm w-20 text-center"
+                    onClick={() => onEditClick(variant.id)}
+                  >
                     Edit
-                  </Button>
-                  <Button href="#" onClick={() => onClick(variant.id)}>
-                    Delete
-                  </Button>
+                  </button>
+                  <DeleteButton
+                    id={variant.id}
+                    query={DELETE_VARIANT_MUTTATION}
+                  />
                 </div>
               </div>
             ))}

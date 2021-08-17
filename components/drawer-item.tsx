@@ -1,10 +1,9 @@
 import Link from "next/link";
-
 export interface DrawerItemProps {
   href?: string;
   isActive?: boolean;
   children: React.ReactNode;
-  type: string;
+  type: "button" | "link";
   handleClick?: () => void;
 }
 

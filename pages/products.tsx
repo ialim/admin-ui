@@ -5,7 +5,7 @@ import { ErrorMessage } from "../components/error-message";
 import { ProductList } from "../components/product-list";
 import { Product, ProductListItem } from "../components/product-list-item";
 import { Search } from "../components/search";
-import { SVG } from "../svg";
+import { SVG } from "../public/svg";
 
 interface ProductEntry extends Product {
   id: string;
@@ -62,6 +62,7 @@ const Products = () => {
   });
   return (
     <div className="space-y-3">
+      <div id="mymodal"></div>
       <Button href="/add-products">+ Add Product</Button>
       <Button href="#">
         <span className="inline-block mr-2">{documents}</span>Import Product

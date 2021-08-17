@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { SVG } from "../svg";
+import { SVG } from "../public/svg";
 
 export interface Product {
   image?: string;

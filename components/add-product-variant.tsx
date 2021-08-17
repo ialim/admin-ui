@@ -41,11 +41,8 @@ const CREATE_PRODUCT_VARIANT_MUTATION = gql`
         product: { connect: $product }
       }
     ) {
+      id
       name
-      product {
-        id
-        slug
-      }
     }
   }
 `;
@@ -74,6 +71,13 @@ export const AddProductVariant = ({
     try {
       const res = await createProductVariant({
         variables: createProductVariantInput,
+        optimisticResponse: {
+          createProductVariant: {
+            id: "temp-id",
+            __typename: "ProductVariant",
+            name: createProductVariantInput.name,
+          },
+        },
       });
       console.log(res);
     } catch (error) {

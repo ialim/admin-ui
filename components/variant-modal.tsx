@@ -71,11 +71,12 @@ export const VariantModal = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitSuccessful },
+    formState: { errors, isSubmitSuccessful, isDirty, isValid },
     reset,
     watch,
     setValue,
   } = useForm<VariantFormInput>({
+    mode: "onBlur",
     defaultValues,
   });
 
@@ -156,6 +157,7 @@ export const VariantModal = ({
           <div className="flex flex-col space-y-1">
             <label htmlFor="fragrance">Fragrance:</label>
             <select
+              id="fragrance"
               {...register("fragrance", {
                 required: "This is required",
               })}
@@ -193,7 +195,8 @@ export const VariantModal = ({
         <input
           type="submit"
           value={operation}
-          className="form-input py-2 rounded-md bg-gray-100 hover:bg-gray-200 tracking-widest"
+          className="form-input py-2 rounded-md bg-gray-400 hover:bg-gray-200 tracking-widest"
+          disabled={!isDirty || !isValid}
         />
       </form>
     </MyModal>
