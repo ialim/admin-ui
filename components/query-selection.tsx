@@ -1,37 +1,60 @@
 import { DocumentNode, useQuery } from "@apollo/client";
+import { useCombobox } from "downshift";
 import { useEffect } from "react";
 import { ErrorMessage } from "./error-message";
 
 interface QuerySelectionProps {
-  isOpen: any;
-  getMenuProps: any;
-  highlightedIndex: number;
-  getItemProps: any;
-  getInputProps: any;
-  getComboboxProps: any;
+  allItems: any;
   setAllItems: any;
   setInputItems: any;
-  itemToString: any;
+  setDrop: any;
+  setSelected:any;
   inputItems: any;
   searchQuery: DocumentNode;
   keyName: string;
+  drop: boolean;
 }
 
 export const QuerySelection = ({
-  isOpen,
-  getMenuProps,
-  highlightedIndex,
-  getItemProps,
-  getInputProps,
-  getComboboxProps,
+  allItems,
+  setDrop,
   setAllItems,
   setInputItems,
-  itemToString,
+  setSelected,
   inputItems,
   searchQuery,
   keyName,
+  drop,
 }: QuerySelectionProps) => {
   const { loading, error, data } = useQuery(searchQuery);
+
+  const itemToString = (item: any) => (item ? item.name : "");
+
+  const {
+    isOpen,
+    getMenuProps,
+    highlightedIndex,
+    getItemProps,
+    getInputProps,
+    getComboboxProps,
+    toggleMenu,
+  } = useCombobox({
+    items: inputItems,
+    itemToString,
+    onInputValueChange: ({ inputValue }) => {
+      setInputItems(
+        allItems.filter((item: any) =>
+          itemToString(item)
+            .toLowerCase()
+            .startsWith(inputValue?.toLowerCase())
+        )
+      );
+    },
+    onSelectedItemChange: ({ selectedItem }) => {
+      setSelected(itemToString(selectedItem));
+      setDrop(!drop);
+    },
+  });
 
   useEffect(() => {
     if (data) {
@@ -39,7 +62,8 @@ export const QuerySelection = ({
       setAllItems(options);
       setInputItems(options);
     }
-  }, [data, keyName, setAllItems, setInputItems]);
+    if(drop && !isOpen) toggleMenu()
+  }, [data, drop, isOpen, keyName, setAllItems, setInputItems, toggleMenu]);
 
   if (error) return <ErrorMessage error={error} />;
 

@@ -1,6 +1,5 @@
 import { DocumentNode } from "@apollo/client";
-import { useCombobox } from "downshift";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { forwardRef, useState } from "react";
 import { SVG } from "../public/svg";
 import { QuerySelection } from "./query-selection";
@@ -23,44 +22,14 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
     const { down } = SVG;
 
     const onClick = () => {
-      toggleMenu();
       setDrop(!drop);
     };
 
-    const itemToString = (item: any) => (item ? item.name : "");
-
-    const {
-      isOpen,
-      getMenuProps,
-      highlightedIndex,
-      getItemProps,
-      getInputProps,
-      getComboboxProps,
-      toggleMenu,
-    } = useCombobox({
-      items: inputItems,
-      itemToString,
-      onInputValueChange: ({ inputValue }) => {
-        setInputItems(
-          allItems.filter((item) =>
-            itemToString(item)
-              .toLowerCase()
-              .startsWith(inputValue?.toLowerCase())
-          )
-        );
-      },
-      onSelectedItemChange: ({ selectedItem }) => {
-        setSelected(itemToString(selectedItem));
-        setDrop(!drop);
-      },
-    });
-
     useEffect(() => {
-      if (!isOpen) {
-        setDrop(false)
-        setValue(name, selelected)
+      if (drop === false) {
+        setValue(name, selelected);
       }
-    }, [isOpen, name, selelected, setValue])
+    }, [drop, name, selelected, setValue]);
 
     return (
       <div className="relative">
@@ -81,15 +50,12 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
         </button>
         {drop && (
           <QuerySelection
-            isOpen={isOpen}
-            getMenuProps={getMenuProps}
-            highlightedIndex={highlightedIndex}
-            getItemProps={getItemProps}
-            getInputProps={getInputProps}
-            getComboboxProps={getComboboxProps}
+            drop={drop}
+            allItems={allItems}
             setAllItems={setAllItems}
+            setDrop={setDrop}
             setInputItems={setInputItems}
-            itemToString={itemToString}
+            setSelected={setSelected}
             inputItems={inputItems}
             searchQuery={searchQuery}
             keyName={keyName}
@@ -99,3 +65,5 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
     );
   }
 );
+
+AutoSelect.displayName = "Selection";
