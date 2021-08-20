@@ -1,32 +1,23 @@
 import { gql, useLazyQuery } from "@apollo/client";
 import { resetIdCounter, useCombobox } from "downshift";
 import { debounce } from "lodash";
-import { useRouter } from "next/router";
+import { Variant } from "../pages/add-purchase";
 
 const SEARCH_PRODUCTS_QUERY = gql`
-  query SEARCH_PRODUCTS_QUERY($searchTerm: String) {
-    searchItems: allProducts(
-      where: {
-        OR: [
-          { name_contains_i: $searchTerm }
-          { description_contains_i: $searchTerm }
-        ]
-      }
-    ) {
+  query SEARCH_VARIANT_QUERY($searchTerm: String) {
+    searchItems: allProductVariants(where: { name_contains_i: $searchTerm }) {
       id
+      itemcode
       name
-      slug
-      featuredAsset {
-        image {
-          publicUrlTransformed
-        }
-      }
     }
   }
 `;
 
-export const Search = () => {
-  const router = useRouter();
+interface VariantSearchProps {
+  updateVariant: any;
+}
+
+export const VariantSearch = ({ updateVariant }: VariantSearchProps) => {
   resetIdCounter();
   const [findItems, { loading, error, data }] = useLazyQuery(
     SEARCH_PRODUCTS_QUERY,
@@ -54,42 +45,57 @@ export const Search = () => {
     },
     onSelectedItemChange({ selectedItem }) {
       console.log("Selected item change: ", selectedItem);
-      router.push({
-        pathname: `/product/${selectedItem.slug}/${selectedItem.id}`,
-      });
+      const variant: Variant = {
+        id: "",
+        itemcode: 0,
+        name: "",
+        barcode: 0,
+        quantity: 0,
+        cost: 0,
+        discount: 0,
+        sku: "",
+        total: 0,
+        tax: 0,
+      };
+      if (selectedItem) {
+        variant.id = selectedItem.id || "";
+        variant.itemcode = selectedItem?.itemcode || 0;
+        variant.name = selectedItem?.name || "";
+        updateVariant(variant);
+      }
+      setTimeout(() => reset(), 1000);
     },
-    itemToString: (item: any) => item?.name || "",
+    itemToString: (item: any) => `(${item?.itemcode}) ${item?.name}` || "",
   });
   return (
-    <div className="mx-5">
+    <div className="mt-1">
       <div
         {...getComboboxProps()}
-        className="flex flex-row rounded-lg shadow-lg"
+        className="flex flex-row shadow-lg border-[1px] rounded-md border-gray-400"
       >
         <input
           {...getInputProps({
             type: "search",
-            placeholder: "Search for a product here...",
+            placeholder: "Search for a product variant here...",
             id: "search",
           })}
-          className="w-full px-5 py-3 rounded-lg"
+          className="w-full px-2 py-2 rounded-lg"
         />
       </div>
-      <ul className="flex flex-col absolute z-10 space-y-3 bg-gray-50 w-96 mt-1 rounded-md shadow-md" {...getMenuProps()}>
+      <ul
+        className="flex flex-col absolute z-10 space-y-3 bg-gray-50 w-96 mt-1 rounded-md shadow-md"
+        {...getMenuProps()}
+      >
         {isOpen &&
           items?.map((item: any, index: number) => (
             <li
               {...getItemProps({ item, index })}
               key={item?.id}
-              className={`py-2 pl-11 ${highlightedIndex === index ? "hover:bg-gray-300" : ""}`}
+              className={`py-2 text-sm pl-2 ${
+                highlightedIndex === index ? "hover:bg-gray-300" : ""
+              }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item?.featuredAsset?.image?.publicUrlTransformed}
-                alt=""
-                className="w-12"
-              />
-              {item?.name}
+              {`(${item?.itemcode}) ${item?.name}`}
             </li>
           ))}
         {isOpen && !items.length && !loading && (

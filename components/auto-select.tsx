@@ -1,6 +1,5 @@
 import { DocumentNode } from "@apollo/client";
 import { useCombobox } from "downshift";
-import { useCallback } from "react";
 import { useEffect, useRef } from "react";
 import { forwardRef, useState } from "react";
 import { SVG } from "../public/svg";
@@ -24,8 +23,8 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
     const { down } = SVG;
 
     const onClick = () => {
-      setDrop(!drop);
       toggleMenu();
+      setDrop(!drop);
     };
 
     const itemToString = (item: any) => (item ? item.name : "");
@@ -52,7 +51,7 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
       },
       onSelectedItemChange: ({ selectedItem }) => {
         setSelected(itemToString(selectedItem));
-        setDrop(false);
+        setDrop(!drop);
       },
     });
 
@@ -69,7 +68,7 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
           onClick={onClick}
           title={title}
           value={selelected}
-          className="w-full rounded-md shadow-sm text-gray-400 border-2 py-1 px-2 flex justify-between text-left mt-1"
+          className="w-full rounded-md shadow-sm text-gray-400 py-2 px-2 flex justify-between text-left mt-1 border-gray-400 border-[1px]"
           ref={ref}
           type="button"
         >

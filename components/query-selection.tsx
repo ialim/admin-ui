@@ -47,8 +47,11 @@ export const QuerySelection = ({
     <div className="px-2 border-2 mt-1 py-3 rounded-md absolute bg-gray-50 z-30 w-full">
       <div {...getComboboxProps()}>
         <input
+          {...getInputProps({
+            type: "search",
+            id: "search",
+          })}
           className="w-full rounded-md border-2 px-2"
-          {...getInputProps()}
         />
       </div>
       <ul className="mt-1 text-gray-400" {...getMenuProps()}>
@@ -58,12 +61,11 @@ export const QuerySelection = ({
           isOpen &&
           inputItems.map((item: any, index: number) => (
             <li
-              style={
-                highlightedIndex === index
-                  ? { backgroundColor: "#bde4ff", color: "indigo" }
-                  : {}
-              }
               {...getItemProps({ item, index })}
+              className={`
+                ${
+                  highlightedIndex === index ? "bg-gray-300 text-indigo-800" : ""
+                }`}
               key={`${item}${index}`}
             >
               {itemToString(item)}
