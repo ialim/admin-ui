@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
+import { calcNetTotal } from "../lib/basicCalculattions";
 
 interface FieldProps {
   control: any;
@@ -7,31 +8,34 @@ interface FieldProps {
   setValue: any;
   getValues: any;
   variant: any;
-  calcNetTotal: any;
+  setVariants: any;
+  variants: any[];
 }
 
-type WatchValues = { index: number } & Partial<FieldProps>;
+type WatchValues = { index: number; setVariants: any } & Partial<FieldProps>;
 
 const GetWatchValues = ({
   index,
   control,
   setValue,
-  calcNetTotal,
+  setVariants,
 }: WatchValues) => {
-  const [quantity, cost, discount] = useWatch({
+  const variants = useWatch({
     control,
-    name: [
-      `variants.${index}.quantity`,
-      `variants.${index}.cost`,
-      `variants.${index}.discount`,
-    ],
+    name: "variants",
   });
+
+  const { quantity, cost, discount } = variants[index];
 
   console.log(quantity, cost, discount);
   const [tax, subTotal] = calcNetTotal(quantity, cost, discount);
 
-  setValue(`variants.${index}.tax`, tax);
-  setValue(`variants.${index}.total`, subTotal);
+  setVariants(variants);
+
+  useEffect(() => {
+    setValue(`variants.${index}.tax`, tax);
+    setValue(`variants.${index}.total`, subTotal);
+  }, [index, setValue, subTotal, tax]);
 
   return <></>;
 };
@@ -42,7 +46,8 @@ export const Fields = ({
   setValue,
   getValues,
   variant,
-  calcNetTotal,
+  setVariants,
+  variants,
 }: FieldProps) => {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -56,13 +61,8 @@ export const Fields = ({
   return (
     <>
       {fields.map((field, index) => (
-        <tr
-          className="items-center text-sm font-light py-2"
-          key={field.id}
-        >
-          <td className="pr-5">
-            {getValues(`variants.${index}.name`)}
-          </td>
+        <tr className="items-center text-sm font-light py-2" key={field.id}>
+          <td className="pr-5">{getValues(`variants.${index}.name`)}</td>
           <td className="pr-5">
             {getValues(`variants.${index}.itemcode`) ||
               Math.ceil(Math.random() * 100000)}
@@ -95,7 +95,7 @@ export const Fields = ({
               className="bg-gray-100"
               type="number"
               {...register(`variants.${index}.cost`, {
-                setValueAs: (v: any) => parseInt(v) * 100,
+                valueAsNumber: true,
               })}
               defaultValue={0}
             />
@@ -104,29 +104,31 @@ export const Fields = ({
             <input
               className="bg-gray-100"
               type="number"
-              {...register(`variants.${index}.discount`)}
+              {...register(`variants.${index}.discount`, {
+                valueAsNumber: true,
+              })}
               defaultValue={0}
             />
           </td>
           <td className="pr-5">
             <input
               type="number"
-              //   className="hidden"
+              className="hidden"
               defaultValue={0}
               {...register(`variants.${index}.tax`)}
               readOnly
             />
-            {/* {getValues(`variants.${index}.tax`)?.toFixed(2)} */}
+            {variants[index]?.tax.toFixed(2)}
           </td>
           <td className="pr-5">
             <input
               type="number"
-              //   className="hidden"
+              className="hidden"
               defaultValue={0}
               {...register(`variants.${index}.total`)}
               readOnly
             />
-            {/* {getValues(`variants.${index}.total`)?.toFixed(2)} */}
+            {variants[index]?.total.toFixed(2)}
           </td>
           <td>
             <button
@@ -141,7 +143,7 @@ export const Fields = ({
             index={index}
             control={control}
             setValue={setValue}
-            calcNetTotal={calcNetTotal}
+            setVariants={setVariants}
           />
         </tr>
       ))}

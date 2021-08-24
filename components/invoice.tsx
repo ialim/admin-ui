@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { useEffect } from "react";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import Select from "react-select";
 import { AutoSelect } from "../components/auto-select";
@@ -9,6 +7,7 @@ import { InvoiceTable } from "../components/invoice-table";
 import { VariantSearch } from "../components/variant-search";
 import { calcSum, calcTotal } from "../lib/basicCalculattions";
 import {
+  ALL_CUSTOMERS_QUERY,
   ALL_SUPPLIERS_QUERY,
   ALL_WAREHOUSE_QUERY,
   HEADERS,
@@ -17,12 +16,17 @@ import {
 } from "../lib/constants";
 import { PurchaseFormValues, Variant } from "../types/types";
 
+interface InvoiceProps {
+  type: "sale" | "purchase";
+}
+
 let renderCount = 0;
 
-const AddPurchase = () => {
+export const Invoice = ({ type }: InvoiceProps) => {
   const [variant, setVariant] = useState<Variant>();
   const [variants, setVariants] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState<number>(0);
+  const [status, setStatus] = useState("");
   const { discountSum, subTotal, taxSum, quantitySum } = calcSum(variants);
   const {
     control,
@@ -62,6 +66,8 @@ const AddPurchase = () => {
 
   const wareRef = useRef<HTMLButtonElement>(null);
   const suppRef = useRef<HTMLButtonElement>(null);
+  const custRef = useRef<HTMLButtonElement>(null);
+  const billRef = useRef<HTMLButtonElement>(null);
   const onSubmit = (data: any) => {
     console.log(data);
   };
@@ -84,6 +90,11 @@ const AddPurchase = () => {
     subTotal,
     variants.length,
   ]);
+
+  const handlePurchaseSataus = (e: any) => {
+    setValue("status", e?.value || "");
+    setStatus(e?.value || "")
+  };
 
   console.log(renderCount++);
   return (
@@ -108,22 +119,49 @@ const AddPurchase = () => {
           />
           {errors && <p>{errors.warehouse?.message}</p>}
         </div>
-        <div>
-          <label htmlFor="supplier">Supplier:</label>
-          <AutoSelect
-            name="supplier"
-            keyName="allSuppliers"
-            title="Select Supplier..."
-            searchQuery={ALL_SUPPLIERS_QUERY}
-            ref={suppRef}
-            setValue={setValue}
-          />
-        </div>
+        {type === "purchase" ? (
+          <div>
+            <label htmlFor="supplier">Supplier:</label>
+            <AutoSelect
+              name="supplier"
+              keyName="allSuppliers"
+              title="Select Supplier..."
+              searchQuery={ALL_SUPPLIERS_QUERY}
+              ref={suppRef}
+              setValue={setValue}
+            />
+          </div>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="customer">Customer:</label>
+              <AutoSelect
+                name="customer"
+                keyName="allCustomers"
+                title="Select Customer..."
+                searchQuery={ALL_CUSTOMERS_QUERY}
+                ref={custRef}
+                setValue={setValue}
+              />
+            </div>
+            <div>
+              <label htmlFor="biller">Biller:</label>
+              <AutoSelect
+                name="biller"
+                keyName="allBillers"
+                title="Select Biller..."
+                searchQuery={ALL_CUSTOMERS_QUERY}
+                ref={billRef}
+                setValue={setValue}
+              />
+            </div>
+          </>
+        )}
         <div>
           <label htmlFor="status">Purchase Status:</label>
           <Select
             className="mt-1 shadow-md"
-            onChange={(e) => setValue("status", e?.value || "")}
+            onChange={(e) => handlePurchaseSataus(e)}
             options={STATUS_OPTIONS}
             placeholder="Select Status..."
           />
@@ -147,6 +185,8 @@ const AddPurchase = () => {
           subTotal={subTotal}
           quantitySum={quantitySum}
           taxSum={taxSum}
+          type={type}
+          status={status}
         >
           {variant && (
             <Fields
@@ -188,13 +228,50 @@ const AddPurchase = () => {
               {...register("shippingCost", { valueAsNumber: true })}
             />
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="notes">Notes:</label>
-            <textarea
-              className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
-              {...register("notes")}
-            />
-          </div>
+          {type === "purchase" ? (
+            <div className="flex flex-col">
+              <label htmlFor="notes">Notes:</label>
+              <textarea
+                className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
+                {...register("notes")}
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="status">Sale Status:</label>
+                <Select
+                  className="mt-1 shadow-md"
+                  onChange={(e) => setValue("status", e?.value || "")}
+                  options={STATUS_OPTIONS}
+                  placeholder="Select Status..."
+                />
+              </div>
+              <div>
+                <label htmlFor="status">Payment Status:</label>
+                <Select
+                  className="mt-1 shadow-md"
+                  onChange={(e) => setValue("status", e?.value || "")}
+                  options={STATUS_OPTIONS}
+                  placeholder="Select Status..."
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="sale-notes">Sale Notes:</label>
+                <textarea
+                  className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
+                  {...register("notes")}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="staff-notes">Staff Notes:</label>
+                <textarea
+                  className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
+                  {...register("notes")}
+                />
+              </div>
+            </>
+          )}
         </div>
         <div className="overflow-scroll">
           <table className="table-auto bg-gray-100 text-sm">
@@ -243,5 +320,3 @@ const AddPurchase = () => {
     </div>
   );
 };
-
-export default AddPurchase;
