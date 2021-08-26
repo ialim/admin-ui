@@ -1,5 +1,10 @@
 import { gql } from "@apollo/client";
-import { Option, TaxOptions } from "../types/types";
+import {
+  PaymentStatusOption,
+  PurchaseStatusOption,
+  SaleStatusOption,
+  TaxOptions,
+} from "../types/types";
 
 // Queries
 export const ALL_WAREHOUSE_QUERY = gql`
@@ -29,12 +34,33 @@ export const ALL_CUSTOMERS_QUERY = gql`
   }
 `;
 
+export const ALL_BILLERS_QUERY = gql`
+  query {
+    allBillers {
+      id
+      name
+    }
+  }
+`;
+
 // Purchase Page
-export const STATUS_OPTIONS: Option[] = [
-  { label: "Recieved", value: "Recieved".toLowerCase() },
-  { label: "Partial", value: "Partial".toLowerCase() },
-  { label: "Pending", value: "Pending".toLowerCase() },
-  { label: "Ordered", value: "Ordered".toLowerCase() },
+export const STATUS_OPTIONS: PurchaseStatusOption[] = [
+  { label: "Recieved", value: "recieved" },
+  { label: "Partial", value: "partial" },
+  { label: "Pending", value: "pending" },
+  { label: "Ordered", value: "ordered" },
+];
+
+export const PAYMENT_STATUS_OPTIONS: PaymentStatusOption[] = [
+  { label: "Due", value: "due" },
+  { label: "Paid", value: "paid" },
+  { label: "Pending", value: "pending" },
+  { label: "Partial", value: "partial" },
+];
+
+export const SALE_STATUS_OPTIONS: SaleStatusOption[] = [
+  { label: "Completed", value: "completed" },
+  { label: "Pending", value: "pending" },
 ];
 
 export const TAX_OPTIONS: TaxOptions[] = [
@@ -55,3 +81,38 @@ export const HEADERS = [
   "Tax",
   "SubTotal",
 ];
+
+export const PURCHASE_DEFAULT_VALUES = {
+  warehouse: "ware",
+  supplier: "supp",
+  status: "pending",
+  variants: [],
+  items: 0,
+  orderQuantity: 0,
+  orderDiscount: 0,
+  orderTaxRate: 0,
+  orderTax: 0,
+  grandTotal: 0,
+  shippingCost: 0,
+  total: 0,
+  notes: "",
+};
+
+export const SALE_DEFAULT_VALUES = {
+  warehouse: "ware",
+  biller: "biller",
+  customer: "cust",
+  status: "pending",
+  variants: [],
+  items: 0,
+  orderQuantity: 0,
+  orderDiscount: 0,
+  orderTax: 0,
+  grandTotal: 0,
+  shippingCost: 0,
+  total: 0,
+  staffNotes: "",
+  saleNotes: "",
+  paymentStatus: "",
+  saleStatus: "",
+};

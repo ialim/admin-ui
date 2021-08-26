@@ -5,29 +5,34 @@ import { AutoSelect } from "../components/auto-select";
 import { Fields } from "../components/fields";
 import { InvoiceTable } from "../components/invoice-table";
 import { VariantSearch } from "../components/variant-search";
-import { calcSum, calcTotal } from "../lib/basicCalculattions";
 import {
+  ALL_BILLERS_QUERY,
   ALL_CUSTOMERS_QUERY,
   ALL_SUPPLIERS_QUERY,
   ALL_WAREHOUSE_QUERY,
   HEADERS,
+  PAYMENT_STATUS_OPTIONS,
+  PURCHASE_DEFAULT_VALUES,
+  SALE_DEFAULT_VALUES,
+  SALE_STATUS_OPTIONS,
   STATUS_OPTIONS,
   TAX_OPTIONS,
 } from "../lib/constants";
-import { PurchaseFormValues, Variant } from "../types/types";
+import { PurchaseFormValues, SaleFormValues, Variant } from "../types/types";
+import { InvoiceFooter } from "./invoice-footer";
 
 interface InvoiceProps {
   type: "sale" | "purchase";
+  header: string;
+  setData: Function;
 }
 
 let renderCount = 0;
 
-export const Invoice = ({ type }: InvoiceProps) => {
+export const Invoice = ({ type, setData, header }: InvoiceProps) => {
   const [variant, setVariant] = useState<Variant>();
-  const [variants, setVariants] = useState<any[]>([]);
-  const [taxRate, setTaxRate] = useState<number>(0);
   const [status, setStatus] = useState("");
-  const { discountSum, subTotal, taxSum, quantitySum } = calcSum(variants);
+
   const {
     control,
     handleSubmit,
@@ -35,33 +40,9 @@ export const Invoice = ({ type }: InvoiceProps) => {
     register,
     getValues,
     formState: { errors },
-  } = useForm<PurchaseFormValues>({
-    defaultValues: {
-      warehouse: "ware",
-      supplier: "supp",
-      status: "pending",
-      variants: [],
-      items: 0,
-      orderQuantity: 0,
-      orderDiscount: 0,
-      orderTax: 0,
-      grandTotal: 0,
-      shippingCost: 0,
-      total: 0,
-      notes: "",
-    },
-  });
-
-  const [shippingCost, orderDiscount] = useWatch({
-    control,
-    name: ["shippingCost", "orderDiscount", "total"],
-  });
-
-  const { orderTax, grandTotal } = calcTotal({
-    shippingCost,
-    orderDiscount,
-    total: subTotal,
-    taxRate,
+  } = useForm<PurchaseFormValues | SaleFormValues>({
+    defaultValues:
+      type === "purchase" ? PURCHASE_DEFAULT_VALUES : SALE_DEFAULT_VALUES,
   });
 
   const wareRef = useRef<HTMLButtonElement>(null);
@@ -69,37 +50,25 @@ export const Invoice = ({ type }: InvoiceProps) => {
   const custRef = useRef<HTMLButtonElement>(null);
   const billRef = useRef<HTMLButtonElement>(null);
   const onSubmit = (data: any) => {
-    console.log(data);
+    console.log("In Invoice: ", data);
+    setData(data);
   };
 
   useEffect(() => {
     register("warehouse", {
       validate: (value) => !!value.length || "This is required.",
     });
-    setValue("total", subTotal);
-    setValue("items", variants.length);
-    setValue("orderQuantity", quantitySum);
-    setValue("orderTax", orderTax);
-    setValue("grandTotal", grandTotal);
-  }, [
-    grandTotal,
-    orderTax,
-    quantitySum,
-    register,
-    setValue,
-    subTotal,
-    variants.length,
-  ]);
+  }, [register]);
 
   const handlePurchaseSataus = (e: any) => {
-    setValue("status", e?.value || "");
-    setStatus(e?.value || "")
+    setValue("status", (e?.value as never) || "");
+    setStatus(e?.value || "");
   };
 
-  console.log(renderCount++);
+  console.log("Render count Invoice",renderCount++);
   return (
     <div className="mx-5 my-3 bg-white px-5 py-2 flex flex-col">
-      <header className=" py-3 text-xl ">Add Purchase</header>
+      <header className=" py-3 text-xl ">{header}</header>
       <p className="mt-6 font-light text-xs text-gray-400">
         The field labels marked with * are required input fields.
       </p>
@@ -120,17 +89,28 @@ export const Invoice = ({ type }: InvoiceProps) => {
           {errors && <p>{errors.warehouse?.message}</p>}
         </div>
         {type === "purchase" ? (
-          <div>
-            <label htmlFor="supplier">Supplier:</label>
-            <AutoSelect
-              name="supplier"
-              keyName="allSuppliers"
-              title="Select Supplier..."
-              searchQuery={ALL_SUPPLIERS_QUERY}
-              ref={suppRef}
-              setValue={setValue}
-            />
-          </div>
+          <>
+            <div>
+              <label htmlFor="supplier">Supplier:</label>
+              <AutoSelect
+                name="supplier"
+                keyName="allSuppliers"
+                title="Select Supplier..."
+                searchQuery={ALL_SUPPLIERS_QUERY}
+                ref={suppRef}
+                setValue={setValue}
+              />
+            </div>
+            <div>
+              <label htmlFor="status">Purchase Status:</label>
+              <Select
+                className="mt-1 shadow-md"
+                onChange={(e) => handlePurchaseSataus(e)}
+                options={STATUS_OPTIONS}
+                placeholder="Select Status..."
+              />
+            </div>
+          </>
         ) : (
           <>
             <div>
@@ -150,22 +130,13 @@ export const Invoice = ({ type }: InvoiceProps) => {
                 name="biller"
                 keyName="allBillers"
                 title="Select Biller..."
-                searchQuery={ALL_CUSTOMERS_QUERY}
+                searchQuery={ALL_BILLERS_QUERY}
                 ref={billRef}
                 setValue={setValue}
               />
             </div>
           </>
         )}
-        <div>
-          <label htmlFor="status">Purchase Status:</label>
-          <Select
-            className="mt-1 shadow-md"
-            onChange={(e) => handlePurchaseSataus(e)}
-            options={STATUS_OPTIONS}
-            placeholder="Select Status..."
-          />
-        </div>
         <div>
           <label htmlFor="slug">Attach Document:</label>
           <input
@@ -181,12 +152,9 @@ export const Invoice = ({ type }: InvoiceProps) => {
         <InvoiceTable
           title="Order Table"
           headers={HEADERS}
-          discountSum={discountSum}
-          subTotal={subTotal}
-          quantitySum={quantitySum}
-          taxSum={taxSum}
-          type={type}
+          control={control}
           status={status}
+          setValue={setValue}
         >
           {variant && (
             <Fields
@@ -196,20 +164,21 @@ export const Invoice = ({ type }: InvoiceProps) => {
                 getValues,
                 setValue,
                 variant,
-                setVariants,
-                variants,
+                status,
               }}
             />
           )}
         </InvoiceTable>
         <div className="flex-col space-y-3 mt-2">
           <div>
-            <label htmlFor="status">Order Tax:</label>
+            <label htmlFor="taxRate">Order Tax:</label>
             <Select
               className="mt-1 rounded-md border-[1px]"
               options={TAX_OPTIONS}
               placeholder="Select Tax Option..."
-              onChange={(option) => setTaxRate(option?.value || 0)}
+              onChange={(option) =>
+                setValue("orderTaxRate", option?.value || 0)
+              }
             />
           </div>
           <div className="flex flex-col">
@@ -242,8 +211,10 @@ export const Invoice = ({ type }: InvoiceProps) => {
                 <label htmlFor="status">Sale Status:</label>
                 <Select
                   className="mt-1 shadow-md"
-                  onChange={(e) => setValue("status", e?.value || "")}
-                  options={STATUS_OPTIONS}
+                  onChange={(e) =>
+                    setValue("saleStatus", (e?.value as never) || "")
+                  }
+                  options={SALE_STATUS_OPTIONS}
                   placeholder="Select Status..."
                 />
               </div>
@@ -251,66 +222,31 @@ export const Invoice = ({ type }: InvoiceProps) => {
                 <label htmlFor="status">Payment Status:</label>
                 <Select
                   className="mt-1 shadow-md"
-                  onChange={(e) => setValue("status", e?.value || "")}
-                  options={STATUS_OPTIONS}
+                  onChange={(e) =>
+                    setValue("paymentStatus", (e?.value as never) || "")
+                  }
+                  options={PAYMENT_STATUS_OPTIONS}
                   placeholder="Select Status..."
                 />
               </div>
               <div className="flex flex-col">
-                <label htmlFor="sale-notes">Sale Notes:</label>
+                <label htmlFor="saleNotes">Sale Notes:</label>
                 <textarea
                   className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
-                  {...register("notes")}
+                  {...register("saleNotes")}
                 />
               </div>
               <div className="flex flex-col">
-                <label htmlFor="staff-notes">Staff Notes:</label>
+                <label htmlFor="staffNotes">Staff Notes:</label>
                 <textarea
                   className="mt-1 p-3 text-sm text-gray-400 border-gray-400 rounded-md border-[1px]"
-                  {...register("notes")}
+                  {...register("staffNotes")}
                 />
               </div>
             </>
           )}
         </div>
-        <div className="overflow-scroll">
-          <table className="table-auto bg-gray-100 text-sm">
-            <tbody>
-              <tr className="font-medium text-gray-500 text-center">
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong>Items</strong>
-                  <span className="text-right ml-7">{`${variants.length}(${quantitySum})`}</span>
-                </td>
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong>Total</strong>
-                  <span className="text-right ml-7">{subTotal.toFixed(2)}</span>
-                </td>
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong className="">Order Tax</strong>
-                  <span className="text-right ml-7">{orderTax.toFixed(2)}</span>
-                </td>
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong>Discount</strong>
-                  <span className="text-right ml-7">
-                    {orderDiscount.toFixed(2)}
-                  </span>
-                </td>
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong>Shipping Cost</strong>
-                  <span className="text-right ml-7">
-                    {shippingCost.toFixed(2)}
-                  </span>
-                </td>
-                <td className="border-solid border-gray-300 border-[1px] p-2">
-                  <strong>Grand Total</strong>
-                  <span className="text-right ml-7">
-                    {grandTotal.toFixed(2)}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <InvoiceFooter control={control} setValue={setValue} />
         <input
           type="submit"
           value="Submit"

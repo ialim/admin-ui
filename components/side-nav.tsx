@@ -71,7 +71,7 @@ export const SideNav = () => {
       {saleDrop && (
         <Dropdown>
           <DropdownItem type="button">Sale List</DropdownItem>
-          <DropdownItem type="button">Add Sale</DropdownItem>
+          <DropdownItem type="button" href="/add-sale">Add Sale</DropdownItem>
           <DropdownItem type="button">Import Sale By CSV</DropdownItem>
         </Dropdown>
       )}

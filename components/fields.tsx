@@ -1,28 +1,23 @@
 import { useEffect } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import { calcNetTotal } from "../lib/basicCalculattions";
-
+import { formatValue } from "../lib/format-value";
+import { NumberField } from "./number-field";
 interface FieldProps {
   control: any;
-  register: any;
-  setValue: any;
-  getValues: any;
+  register: Function;
+  setValue: Function;
+  getValues: Function;
   variant: any;
-  setVariants: any;
-  variants: any[];
+  status: string;
 }
 
-type WatchValues = { index: number; setVariants: any } & Partial<FieldProps>;
+type WatchValues = { index: number } & Pick<FieldProps, "setValue" | "control">;
 
-const GetWatchValues = ({
-  index,
-  control,
-  setValue,
-  setVariants,
-}: WatchValues) => {
-  const variants = useWatch({
+const GetWatchValues = ({ index, control, setValue }: WatchValues) => {
+  const [variants] = useWatch({
     control,
-    name: "variants",
+    name: ["variants"],
   });
 
   const { quantity, cost, discount } = variants[index];
@@ -30,15 +25,26 @@ const GetWatchValues = ({
   console.log(quantity, cost, discount);
   const [tax, subTotal] = calcNetTotal(quantity, cost, discount);
 
-  setVariants(variants);
-
   useEffect(() => {
     setValue(`variants.${index}.tax`, tax);
     setValue(`variants.${index}.total`, subTotal);
   }, [index, setValue, subTotal, tax]);
 
-  return <></>;
+  return (
+    <>
+      <td className="pr-5">
+        <span className="text-center font-medium w-32">{formatValue(tax)}</span>
+      </td>
+      <td className="pr-5 ">
+        <span className="text-center font-medium w-32">
+          {formatValue(subTotal)}
+        </span>
+      </td>
+    </>
+  );
 };
+
+let renderCount = 0;
 
 export const Fields = ({
   control,
@@ -46,8 +52,7 @@ export const Fields = ({
   setValue,
   getValues,
   variant,
-  setVariants,
-  variants,
+  status,
 }: FieldProps) => {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -55,7 +60,9 @@ export const Fields = ({
   });
 
   useEffect(() => {
-    append(variant);
+    if (variant) {
+      append(variant);
+    }
   }, [append, variant]);
 
   return (
@@ -69,68 +76,47 @@ export const Fields = ({
           </td>
           <td className="pr-5">
             <input
-              className="bg-gray-100"
-              type="number"
-              {...register(`variants.${index}.barcode`, {
-                valueAsNumber: true,
-              })}
+              className="bg-gray-100 text-center w-48"
+              type="text"
+              {...register(`variants.${index}.barcode`, {})}
               defaultValue={0}
             />
           </td>
           <td className="pr-5">
-            <input
-              className="bg-gray-100"
-              type="number"
-              {...register(`variants.${index}.quantity`, {
-                valueAsNumber: true,
-              })}
-              defaultValue={0}
+            <NumberField
+              name="quantity"
+              register={register}
+              setValue={setValue}
+              index={index}
+            />
+          </td>
+          {status === "partial" ? (
+            <td className="pr-5">
+              <input
+                className="bg-gray-100 text-center w-48"
+                type="number"
+                defaultValue={0}
+              />
+            </td>
+          ) : null}
+          <td className="pr-5">
+            <NumberField
+              name="cost"
+              register={register}
+              setValue={setValue}
+              index={index}
             />
           </td>
           <td className="pr-5">
-            <input className="bg-gray-100" type="number" />
-          </td>
-          <td className="pr-5">
-            <input
-              className="bg-gray-100"
-              type="number"
-              {...register(`variants.${index}.cost`, {
-                valueAsNumber: true,
-              })}
-              defaultValue={0}
+            <NumberField
+              name="discount"
+              register={register}
+              setValue={setValue}
+              index={index}
             />
           </td>
-          <td className="pr-5">
-            <input
-              className="bg-gray-100"
-              type="number"
-              {...register(`variants.${index}.discount`, {
-                valueAsNumber: true,
-              })}
-              defaultValue={0}
-            />
-          </td>
-          <td className="pr-5">
-            <input
-              type="number"
-              className="hidden"
-              defaultValue={0}
-              {...register(`variants.${index}.tax`)}
-              readOnly
-            />
-            {variants[index]?.tax.toFixed(2)}
-          </td>
-          <td className="pr-5">
-            <input
-              type="number"
-              className="hidden"
-              defaultValue={0}
-              {...register(`variants.${index}.total`)}
-              readOnly
-            />
-            {variants[index]?.total.toFixed(2)}
-          </td>
-          <td>
+          <GetWatchValues index={index} control={control} setValue={setValue} />
+          <td className="text-center">
             <button
               className="px-3 py-2 rounded-md bg-red-600 text-center font-semibold text-sm text-white"
               onClick={() => remove(index)}
@@ -138,13 +124,7 @@ export const Fields = ({
               Delete
             </button>
           </td>
-          {console.log("Total: ", getValues(`variants.${index}.total`))}
-          <GetWatchValues
-            index={index}
-            control={control}
-            setValue={setValue}
-            setVariants={setVariants}
-          />
+          {console.log("Render count Invoice Fields: ", renderCount++)}
         </tr>
       ))}
     </>

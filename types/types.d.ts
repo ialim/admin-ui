@@ -16,47 +16,44 @@ type FormValues = {
   items: number;
   orderQuantity: number;
   shippingCost: number;
+  orderTaxRate: number;
   orderTax: number;
   grandTotal: number;
   orderDiscount: number;
   total: number;
   notes: string;
-  stafNotes: string;
+  staffNotes: string;
   saleNotes: string;
   saleStatus: string;
   paymentStatus: string;
 };
 
-export type PurchaseFormValues = {
-  warehouse: string;
-  supplier: string;
-  status: string;
-  invoice: any;
-  variants: NestedValue<Variant[]>;
-  items: number;
-  orderQuantity: number;
-  shippingCost: number;
-  orderTax: number;
-  grandTotal: number;
-  orderDiscount: number;
-  total: number;
-  notes: string;
-};
+export type PurchaseFormValues = Omit<
+  FormValues,
+  | "saleNotes"
+  | "saleStatus"
+  | "paymentStatus"
+  | "staffNotes"
+  | "biller"
+  | "customer"
+>;
+
+export type SaleFormValues = Omit<FormValues, "notes" | "supplier" | "status">;
 
 export type Variant = {
   id: string;
   itemcode: number;
   name: string;
-  barcode?: number;
-  quantity?: number;
-  cost?: number;
+  barcode: string;
+  quantity: number;
+  cost: number;
   discount?: number;
-  sku?: string;
-  total?: number;
+  sku: string;
+  total: number;
   tax?: number;
 };
 
-export type status =
+export type Status =
   | "Recieved"
   | "Partial"
   | "Pending"
@@ -65,14 +62,67 @@ export type status =
   | "Due"
   | "Paid";
 
-export type PurchaseStatus = "Recieved" | "Partial" | "Pending" | "Ordered";
+export type PurchaseStatus = Exclude<Status, "Completed" | "Due" | "Paid">;
 
-export type Option = {
-  label: PurchaseStatus;
-  value: string;
+export type PaymentStatus = Exclude<
+  Status,
+  "Completed" | "Recieved" | "Ordered"
+>;
+
+export type SaleStatus = Extract<Status, "Completed" | "Pending">;
+
+type Option<T, K> = {
+  label: T;
+  value: K;
 };
+
+export type PaymentStatusOption = Option<
+  PaymentStatus,
+  Lowercase<PaymentStatus>
+>;
+
+export type PurchaseStatusOption = Option<
+  PurchaseStatus,
+  Lowercase<PurchaseStatus>
+>;
+
+export type SaleStatusOption = Option<SaleStatus, Lowercase<SaleStatus>>;
+
+export type SaleStatusOption = Option<>;
 
 export type TaxOptions = {
   label: string;
   value: number;
+};
+
+type UniqueIdInput = {
+  id: string;
+};
+
+type ProductPurchase = {
+  barcode: string;
+  sku: string;
+  variant: { connect: UniqueIdInput };
+  quantity: number;
+  cost: number;
+  total: number;
+};
+
+type CreatePurchaseInput = {
+  reference_no: string;
+  item: number;
+  total_qty: number;
+  total_discount: number;
+  total_cost: number;
+  total_tax: number;
+  shipping_cost: number;
+  grand_total: number;
+  paid_amount: number;
+  invoice: any;
+  status: string;
+  user: UniqueIdInput;
+  product_purchases: ProductPurchase[];
+  supplier: UniqueIdInput;
+  warehouse: UniqueIdInput;
+  notes: string;
 };
