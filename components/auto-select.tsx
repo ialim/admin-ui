@@ -16,7 +16,7 @@ type AutoSelectProps = {
 export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
   ({ searchQuery, title, keyName, setValue, name, ...rest }, ref) => {
     const [drop, setDrop] = useState(false);
-    const [selelected, setSelected] = useState("");
+    const [selelected, setSelected] = useState({id:"", name:""});
     const [allItems, setAllItems] = useState([]);
     const [inputItems, setInputItems] = useState([]);
     const { down } = SVG;
@@ -27,7 +27,7 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
 
     useEffect(() => {
       if (drop === false) {
-        setValue(name, selelected);
+        setValue(name, selelected?.id);
       }
     }, [drop, name, selelected, setValue]);
 
@@ -36,13 +36,13 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
         <button
           onClick={onClick}
           title={title}
-          value={selelected}
+          value={selelected?.name}
           className="w-full rounded-md shadow-sm text-gray-400 py-2 px-2 flex justify-between text-left mt-1 border-gray-400 border-[1px]"
           ref={ref}
           type="button"
         >
-          {selelected ? (
-            <span className="text-left text-indigo-800">{selelected}</span>
+          {selelected.name ? (
+            <span className="text-left text-indigo-800">{selelected.name}</span>
           ) : (
             <span className="text-left">{title}</span>
           )}

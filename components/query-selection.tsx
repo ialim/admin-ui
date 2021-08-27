@@ -51,7 +51,7 @@ export const QuerySelection = ({
       );
     },
     onSelectedItemChange: ({ selectedItem }) => {
-      setSelected(itemToString(selectedItem));
+      setSelected((selectedItem));
       setDrop(!drop);
     },
   });

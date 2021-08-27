@@ -58,6 +58,12 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
     register("warehouse", {
       validate: (value) => !!value.length || "This is required.",
     });
+    register("items", {
+      validate: (value) => value > 0 || "This is required.",
+    });
+    register("orderQuantity", {
+      validate: (value) => value > 0 || "This is required.",
+    });
   }, [register]);
 
   const handlePurchaseSataus = (e: any) => {
@@ -65,7 +71,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
     setStatus(e?.value || "");
   };
 
-  console.log("Render count Invoice",renderCount++);
+  console.log("Render count Invoice", renderCount++);
   return (
     <div className="mx-5 my-3 bg-white px-5 py-2 flex flex-col">
       <header className=" py-3 text-xl ">{header}</header>
@@ -169,6 +175,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
             />
           )}
         </InvoiceTable>
+        {errors && <p>{errors.variants?.message}</p>}
         <div className="flex-col space-y-3 mt-2">
           <div>
             <label htmlFor="taxRate">Order Tax:</label>

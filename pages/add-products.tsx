@@ -1,4 +1,4 @@
-import { DocumentNode, gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import Router from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";

@@ -59,6 +59,8 @@ export const Fields = ({
     name: "variants",
   });
 
+  console.log("In filed: ", variant);
+
   useEffect(() => {
     if (variant) {
       append(variant);
@@ -92,10 +94,11 @@ export const Fields = ({
           </td>
           {status === "partial" ? (
             <td className="pr-5">
-              <input
-                className="bg-gray-100 text-center w-48"
-                type="number"
-                defaultValue={0}
+              <NumberField
+                name="received"
+                register={register}
+                setValue={setValue}
+                index={index}
               />
             </td>
           ) : null}

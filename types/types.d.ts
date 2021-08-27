@@ -46,11 +46,12 @@ export type Variant = {
   name: string;
   barcode: string;
   quantity: number;
+  received: number;
   cost: number;
-  discount?: number;
+  discount: number;
   sku: string;
   total: number;
-  tax?: number;
+  tax: number;
 };
 
 export type Status =
@@ -104,6 +105,9 @@ type ProductPurchase = {
   sku: string;
   variant: { connect: UniqueIdInput };
   quantity: number;
+  received: number;
+  tax: number;
+  discount: number;
   cost: number;
   total: number;
 };
@@ -115,13 +119,14 @@ type CreatePurchaseInput = {
   total_discount: number;
   total_cost: number;
   total_tax: number;
+  tax_rate: number;
   shipping_cost: number;
   grand_total: number;
   paid_amount: number;
-  invoice: any;
+  invoice?: any;
   status: string;
   user: UniqueIdInput;
-  product_purchases: ProductPurchase[];
+  product_purchases?: ProductPurchase[];
   supplier: UniqueIdInput;
   warehouse: UniqueIdInput;
   notes: string;

@@ -1,7 +1,7 @@
 import { gql, useLazyQuery } from "@apollo/client";
 import { resetIdCounter, useCombobox } from "downshift";
 import { debounce } from "lodash";
-import { Variant } from "../pages/add-purchase";
+import { Variant } from "../types/types";
 
 const SEARCH_PRODUCTS_QUERY = gql`
   query SEARCH_VARIANT_QUERY($searchTerm: String) {
@@ -49,8 +49,9 @@ export const VariantSearch = ({ updateVariant }: VariantSearchProps) => {
         id: "",
         itemcode: 0,
         name: "",
-        barcode: 0,
+        barcode: "",
         quantity: 0,
+        received: 0,
         cost: 0,
         discount: 0,
         sku: "",
@@ -61,6 +62,7 @@ export const VariantSearch = ({ updateVariant }: VariantSearchProps) => {
         variant.id = selectedItem.id || "";
         variant.itemcode = selectedItem?.itemcode || 0;
         variant.name = selectedItem?.name || "";
+        console.log("In search: ",variant)
         updateVariant(variant);
       }
       setTimeout(() => reset(), 1000);

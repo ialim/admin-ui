@@ -8,11 +8,12 @@ const CREATE_PURCHASE_MUTATION = gql`
     $total_discount: Int
     $total_cost: Int
     $total_tax: Int
+    $tax_rate: Int
     $shipping_cost: Int
     $grand_total: Int
     $paid_amount: Int
     $invoice: Upload
-    $status: PurchaseStatusType
+    $status: String
     $user: UserWhereUniqueInput
     $product_purchases: [ProductPurchaseCreateInput]
     $supplier: SupplierWhereUniqueInput
@@ -27,10 +28,11 @@ const CREATE_PURCHASE_MUTATION = gql`
         total_discount: $total_discount
         total_cost: $total_cost
         total_tax: $total_tax
+        tax_rate: $tax_rate
         shipping_cost: $shipping_cost
         grand_total: $grand_total
         paid_amount: $paid_amount
-        invoice: { upload: $invoice}
+        invoice: { upload: $invoice }
         status: $status
         user: { connect: $user }
         product_purchases: { create: $product_purchases }
@@ -40,13 +42,22 @@ const CREATE_PURCHASE_MUTATION = gql`
       }
     ) {
       id
+      product_purchases {
+        variant {
+          id
+          allocated
+          sellable
+          stockOnHand
+          outOfStockThreshold
+          lastCostPrice
+          totalPurchased
+        }
+      }
     }
   }
 `;
 
 export const useCreatePurchaseMutation = () => {
-  const createPurchase = useMutation(
-    CREATE_PURCHASE_MUTATION
-  );
-  return createPurchase
+  const createPurchase = useMutation(CREATE_PURCHASE_MUTATION);
+  return createPurchase;
 };
