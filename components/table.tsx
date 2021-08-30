@@ -1,6 +1,14 @@
+import { DocumentNode } from "@apollo/client";
 import { useEffect } from "react";
-import { usePagination, useRowSelect, useSortBy, useTable } from "react-table";
+import {
+  usePagination,
+  useRowSelect,
+  useSortBy,
+  useTable,
+  useGlobalFilter,
+} from "react-table";
 import { Action } from "./action";
+import { SearchTable } from "./search-table";
 import { IndeterminateCheckbox } from "./table-checkbox";
 
 interface TableProps {
@@ -10,6 +18,11 @@ interface TableProps {
   loading?: boolean;
   pageCount?: any;
   fetchData?: any;
+  entriesCount: number;
+  searchQuery: DocumentNode;
+  setData: Function;
+  name: string;
+  type: "SERVER" | "CLIENT";
 }
 
 export const Table = ({
@@ -18,6 +31,11 @@ export const Table = ({
   fetchData,
   loading,
   pageCount: controlledPageCount,
+  entriesCount,
+  searchQuery,
+  setData,
+  name,
+  type,
 }: TableProps) => {
   const {
     getTableProps,
@@ -35,18 +53,21 @@ export const Table = ({
     previousPage,
     setPageSize,
     selectedFlatRows,
-    state: { pageIndex, pageSize, selectedRowIds },
+    setGlobalFilter,
+    state: { pageIndex, pageSize, selectedRowIds, globalFilter },
   } = useTable(
     {
       columns,
       data,
       initialState: { pageIndex: 0 }, // Pass our hoisted table state
-      manualPagination: true, // Tell the usePagination
+      manualPagination: type === "SERVER" ? true : false, // Tell the usePagination
       // hook that we'll handle our own data fetching
       // This means we'll also have to provide our own
       // pageCount.
-      pageCount: controlledPageCount,
+      ...(type === "SERVER" && { pageCount: controlledPageCount }),
+      autoResetSortBy: false,
     },
+    useGlobalFilter,
     useSortBy,
     usePagination,
     useRowSelect,
@@ -67,7 +88,7 @@ export const Table = ({
           // to the render a checkbox
           // eslint-disable-next-line react/display-name
           Cell: ({ row }) => (
-            <div>
+            <div className="pl-5">
               <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
             </div>
           ),
@@ -93,8 +114,8 @@ export const Table = ({
   );
 
   useEffect(() => {
-    fetchData({ pageIndex, pageSize });
-  }, [fetchData, pageIndex, pageSize]);
+    if (type === "SERVER") fetchData({ pageIndex, pageSize });
+  }, [fetchData, pageIndex, pageSize, type]);
   return (
     <div className="mx-5 mt-4">
       <div className="flex flex-row justify-between">
@@ -113,30 +134,34 @@ export const Table = ({
           </select>
           <p className="inline-block ml-2">Records</p>
         </div>
-        <div>Search</div>
+        <SearchTable
+          query={searchQuery}
+          setData={setData}
+          name={name}
+          filter={globalFilter}
+          setFilter={setGlobalFilter}
+          type={type}
+        />
         <div>export options</div>
       </div>
       {loading && <p>Loading...</p>}
       <table
-        className="flex flex-col bg-white mt-5 h-24 w-full divide-y-2 divide-gray-200"
+        className="table-auto bg-white mt-5 divide-y-2 divide-gray-200"
         {...getTableProps()}
       >
-        <thead className="w-full">
+        <thead>
           {headerGroups.map((headerGroup) => (
             // eslint-disable-next-line react/jsx-key
-            <tr
-              className="flex flex-row justify-between px-3"
-              {...headerGroup.getHeaderGroupProps()}
-            >
+            <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
                 // eslint-disable-next-line react/jsx-key
                 <th
-                  className="flex flex-row justify-between py-3 text-left"
+                  className="font-normal text-gray-500 text-sm"
                   {...column.getHeaderProps(column.getSortByToggleProps())}
                 >
                   {column.render("Header")}
                   {!["selection", "action"].includes(column.id) ? (
-                    <div>
+                    <div className="inline-block">
                       <span
                         className={`font-extralight ${
                           column.isSorted
@@ -168,16 +193,21 @@ export const Table = ({
             </tr>
           ))}
         </thead>
-        <tbody {...getTableBodyProps()}>
-          {rows.map((row) => {
+        <tbody className="divide-y-2 space-y-2 mt-1" {...getTableBodyProps()}>
+          {page.map((row) => {
             prepareRow(row);
             return (
               // eslint-disable-next-line react/jsx-key
-              <tr {...row.getRowProps()}>
+              <tr
+                className="items-center text-sm font-light py-2"
+                {...row.getRowProps()}
+              >
                 {row.cells.map((cell) => {
                   return (
                     // eslint-disable-next-line react/jsx-key
-                    <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+                    <td className="pr-5 text-center" {...cell.getCellProps()}>
+                      {cell.render("Cell")}
+                    </td>
                   );
                 })}
               </tr>
@@ -191,20 +221,39 @@ export const Table = ({
       */}
       <div className="flex flex-row justify-between font-light text-xs mt-2">
         <span>
-          Showing {page.length ? page.length * pageIndex + 1 : page.length} -{" "}
-          {page.length * (pageIndex + 1)} of ~{controlledPageCount * pageSize}{" "}
-          results
+          Showing {page.length ? pageSize * pageIndex + 1 : page.length} -{" "}
+          {pageIndex + 1 >= pageCount
+            ? rows.length
+            : page.length * (pageIndex + 1)}{" "}
+          of {rows.length} results
         </span>
-        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+        <button
+          className="bg-gray-200 border-[1px] border-gray-700 w-5 rounded-sm disabled:opacity-40"
+          onClick={() => gotoPage(0)}
+          disabled={!canPreviousPage}
+        >
           {"<<"}
         </button>{" "}
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+        <button
+          className="bg-gray-200 border-[1px] border-gray-700 w-5 rounded-sm disabled:opacity-40"
+          onClick={() => previousPage()}
+          disabled={!canPreviousPage}
+        >
           {"<"}
         </button>{" "}
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
+        <button
+          className="bg-gray-200 border-[1px] border-gray-700 w-5 rounded-sm disabled:opacity-40"
+          onClick={() => nextPage()}
+          disabled={!canNextPage}
+          type="button"
+        >
           {">"}
         </button>{" "}
-        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+        <button
+          className="bg-gray-200 border-[1px] border-gray-700 w-5 rounded-sm disabled:opacity-40"
+          onClick={() => gotoPage(pageCount - 1)}
+          disabled={!canNextPage}
+        >
           {">>"}
         </button>{" "}
         <span>

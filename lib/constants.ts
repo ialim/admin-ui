@@ -6,6 +6,8 @@ import {
   TaxOptions,
 } from "../types/types";
 
+export const CLIENT_SIDE_FILTERING_LIMIT: number = 1000;
+
 // Queries
 export const ALL_WAREHOUSE_QUERY = gql`
   query {
@@ -39,6 +41,35 @@ export const ALL_BILLERS_QUERY = gql`
     allBillers {
       id
       name
+    }
+  }
+`;
+
+export const ALL_PURCHASES_QUERY = gql`
+  query ALL_PURCHASES_QUERY {
+    allPurchases {
+      id
+      created_at
+      reference_no
+    }
+  }
+`;
+
+export const SEARCH_PURCHASE_QUERY = gql`
+  query SEARCH_PURCHASE_QUERY($searchTerm: String) {
+    searchPurchases: allPurchases(
+      where: {
+        OR: [
+          { reference_no_contains_i: $searchTerm }
+          { status_contains_i: $searchTerm }
+          { supplier: { name_contains_i: $searchTerm } }
+          { user: { name_contains_i: $searchTerm } }
+        ]
+      }
+    ) {
+      id
+      created_at
+      reference_no
     }
   }
 `;

@@ -1,3 +1,4 @@
+import { ApolloError } from "@apollo/client";
 import { NestedValue } from "react-hook-form";
 
 export type CalcTotal = { taxRate: number } & Pick<
@@ -130,4 +131,34 @@ type CreatePurchaseInput = {
   supplier: UniqueIdInput;
   warehouse: UniqueIdInput;
   notes: string;
+};
+
+type UpdateVariantStockInput = {
+  id: string;
+  data: {
+    sellable: number;
+    stockOnHand: number;
+    outOfStockThreshold: number;
+    lastCostPrice: number;
+    totalPurchased: number;
+    isAvailable: boolean;
+    isSellable: boolean;
+  };
+};
+
+type VariantStockData = {
+  sellable: number;
+  stockOnHand: number;
+  outOfStockThreshold: number;
+  lastCostPrice: number;
+  totalPurchased: number;
+  isAvailable: boolean;
+  isSellable: boolean;
+};
+
+type Message = {
+  type: string;
+  ok: boolean;
+  data?: any;
+  error?: ApolloError;
 };

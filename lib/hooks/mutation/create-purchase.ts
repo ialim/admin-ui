@@ -43,13 +43,15 @@ const CREATE_PURCHASE_MUTATION = gql`
     ) {
       id
       product_purchases {
+        cost
+        received
+        quantity
         variant {
           id
           allocated
           sellable
           stockOnHand
           outOfStockThreshold
-          lastCostPrice
           totalPurchased
         }
       }

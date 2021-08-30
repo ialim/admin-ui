@@ -17,7 +17,7 @@ export const Action = ({ actions = ["VIEW", "EDIT"], id }: ActionProps) => {
     <div>
       <button
         onClick={() => setdrop(!drop)}
-        className="flex flex-row justify-between w-full"
+        className="flex flex-row justify-between"
       >
         <span>Action</span>
         {drop ? <div>{up}</div> : <div>{down}</div>}

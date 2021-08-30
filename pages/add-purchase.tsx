@@ -1,9 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Invoice } from "../components/invoice";
-import { formatCreatePurchaseData } from "../lib/format-data";
-import { useCreatePurchaseMutation } from "../lib/hooks/purchase-mutation";
+import {
+  formatCreatePurchaseData,
+  formatVariantStockUpdateData,
+} from "../lib/format-data";
+import { useCreatePurchaseMutation } from "../lib/hooks/mutation/create-purchase";
+import { useUpdateVariantStockMutation } from "../lib/hooks/mutation/update-variant";
 import { useUser } from "../lib/hooks/User";
-import { CreatePurchaseInput } from "../types/types";
+import {
+  CreatePurchaseInput,
+  Message,
+  UpdateVariantStockInput,
+} from "../types/types";
 
 const AddPurchase = () => {
   const [data, setData] = useState<any>();
@@ -11,26 +19,76 @@ const AddPurchase = () => {
   const [createPurchase, { loading, error, data: purchaseData }] =
     useCreatePurchaseMutation();
 
-  const createPurchaseMutation = async (
-    createPurchaseInput: CreatePurchaseInput
-  ) => {
-    const res = await createPurchase({ variables: createPurchaseInput }).catch(
-      (error) => console.log("Here in function: ", error.message)
-    );
-    return res;
-  };
+  const [updateVariantStock, updateResult] = useUpdateVariantStockMutation();
+
+  const createPurchaseMutation = useCallback(
+    async (createPurchaseInput: CreatePurchaseInput): Promise<Message> => {
+      try {
+        const res = await createPurchase({ variables: createPurchaseInput });
+        return { type: "create purchase", ok: true, data: res.data };
+      } catch (error) {
+        return { type: "create purchase", ok: false, error };
+      }
+    },
+    [createPurchase]
+  );
+
+  const updateVariantStockMutation = useCallback(
+    async (
+      updateVariantStockInput: UpdateVariantStockInput[]
+    ): Promise<Message> => {
+      try {
+        console.log("In mutation: ", updateVariantStockInput);
+        const res = await updateVariantStock({
+          variables: { updateVariantStockInput },
+        });
+        return { type: "update variant stock", ok: true, data: res.data };
+      } catch (error) {
+        return { type: "update variant stock", ok: false, error };
+      }
+    },
+    [updateVariantStock]
+  );
+
+  const runPurchaseEffect = useCallback(
+    async (data: any) => {
+      const createPurchaseInput = formatCreatePurchaseData(data, user?.id);
+
+      console.log("hi: ", createPurchaseInput);
+
+      const {
+        ok,
+        type,
+        error,
+        data: variantStockDatas,
+      } = await createPurchaseMutation(createPurchaseInput);
+
+      if (ok) {
+        console.log(variantStockDatas);
+        const updateVariantStockInput =
+          formatVariantStockUpdateData(variantStockDatas);
+        console.log("here: ", updateVariantStockInput);
+        const {
+          ok,
+          type,
+          error,
+          data: updatedVariantStockDatas,
+        } = await updateVariantStockMutation(updateVariantStockInput);
+
+        ok
+          ? console.log(type, updatedVariantStockDatas)
+          : console.log(type, error?.message);
+      }
+    },
+    [createPurchaseMutation, updateVariantStockMutation, user?.id]
+  );
+
   console.log("In Purchase: ", data);
   useEffect(() => {
     if (data) {
-      const createPurchaseInput = formatCreatePurchaseData(data, user?.id);
-      console.log("hi: ", createPurchaseInput);
-      const res = createPurchaseMutation(createPurchaseInput);
-      console.log(res);
-
-      loading && console.log("Loading...");
-      error && console.log("Errors: ", error.message);
+      runPurchaseEffect(data);
     }
-  }, [data]);
+  }, [data, runPurchaseEffect]);
   return <Invoice header="Add Purchase" type="purchase" setData={setData} />;
 };
 

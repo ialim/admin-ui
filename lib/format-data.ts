@@ -2,6 +2,7 @@ import {
   CreatePurchaseInput,
   ProductPurchase,
   PurchaseFormValues,
+  UpdateVariantStockInput,
 } from "../types/types";
 
 export const formatCreatePurchaseData = (
@@ -74,4 +75,61 @@ export const formatCreatePurchaseData = (
   };
 
   return createPurchaseInput;
+};
+
+export const formatVariantStockUpdateData = (data: any) => {
+  const updateVariantStockInput: UpdateVariantStockInput[] = [];
+  const {
+    createPurchase: { product_purchases },
+  } = data;
+
+  product_purchases.map((productPurchase: any) => {
+    const {
+      cost,
+      received,
+      quantity,
+      variant: {
+        id,
+        allocated,
+        sellable,
+        stockOnHand,
+        outOfStockThreshold,
+        totalPurchased,
+      },
+    } = productPurchase;
+
+    let notNull = [
+      allocated,
+      sellable,
+      stockOnHand,
+      outOfStockThreshold,
+      totalPurchased,
+    ].map((val) => (val === null ? 0 : val));
+
+    let [
+      _allocated,
+      _sellable,
+      _stockOnHand,
+      _outOfStockThreshold,
+      _totalPurchased,
+    ] = notNull;
+
+    updateVariantStockInput.push({
+      id,
+      data: {
+        sellable: _stockOnHand + received - _allocated - _outOfStockThreshold,
+        stockOnHand: _stockOnHand + received,
+        outOfStockThreshold: _outOfStockThreshold,
+        lastCostPrice: cost,
+        totalPurchased: _totalPurchased + quantity,
+        isAvailable:
+          _stockOnHand + received - outOfStockThreshold > 0 ? true : false,
+        isSellable:
+          _stockOnHand + received - _allocated - _outOfStockThreshold > 0
+            ? true
+            : false,
+      },
+    });
+  });
+  return updateVariantStockInput;
 };
