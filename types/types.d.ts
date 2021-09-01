@@ -6,13 +6,18 @@ export type CalcTotal = { taxRate: number } & Pick<
   "orderDiscount" | "shippingCost" | "total"
 >;
 
+type queryOption = {
+  id: string;
+  name: string;
+};
+
 type FormValues = {
-  warehouse: string;
-  supplier: string;
-  biller: string;
-  customer: string;
+  warehouse: NestedValue<queryOption>;
+  supplier: NestedValue<queryOption>;
+  biller: NestedValue<queryOption>;
+  customer: NestedValue<queryOption>;
   status: string;
-  invoice: any;
+  invoice?: any;
   variants: NestedValue<Variant[]>;
   items: number;
   orderQuantity: number;
@@ -90,7 +95,7 @@ export type PurchaseStatusOption = Option<
 
 export type SaleStatusOption = Option<SaleStatus, Lowercase<SaleStatus>>;
 
-export type SaleStatusOption = Option<>;
+// export type SaleStatusOption = Option<>;
 
 export type TaxOptions = {
   label: string;
@@ -113,6 +118,8 @@ type ProductPurchase = {
   total: number;
 };
 
+type UpdateProductPurchase = { data: Partial<ProductPurchase>; id: string };
+
 type CreatePurchaseInput = {
   reference_no: string;
   item: number;
@@ -131,6 +138,11 @@ type CreatePurchaseInput = {
   supplier: UniqueIdInput;
   warehouse: UniqueIdInput;
   notes: string;
+};
+
+type UpdatePurchaseInput = {
+  id: string;
+  data: Partial<CreatePurchaseInput>;
 };
 
 type UpdateVariantStockInput = {

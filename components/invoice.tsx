@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Select from "react-select";
 import { AutoSelect } from "../components/auto-select";
 import { Fields } from "../components/fields";
@@ -12,24 +12,35 @@ import {
   ALL_WAREHOUSE_QUERY,
   HEADERS,
   PAYMENT_STATUS_OPTIONS,
-  PURCHASE_DEFAULT_VALUES,
-  SALE_DEFAULT_VALUES,
   SALE_STATUS_OPTIONS,
   STATUS_OPTIONS,
   TAX_OPTIONS,
 } from "../lib/constants";
-import { PurchaseFormValues, SaleFormValues, Variant } from "../types/types";
+import {
+  PurchaseFormValues,
+  PurchaseStatus,
+  SaleFormValues,
+  Variant,
+} from "../types/types";
 import { InvoiceFooter } from "./invoice-footer";
 
 interface InvoiceProps {
   type: "sale" | "purchase";
   header: string;
   setData: Function;
+  defaultValues: any;
+  action: "create" | "update";
 }
 
 let renderCount = 0;
 
-export const Invoice = ({ type, setData, header }: InvoiceProps) => {
+export const Invoice = ({
+  type,
+  setData,
+  header,
+  defaultValues,
+  action,
+}: InvoiceProps) => {
   const [variant, setVariant] = useState<Variant>();
   const [status, setStatus] = useState("");
 
@@ -41,8 +52,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
     getValues,
     formState: { errors },
   } = useForm<PurchaseFormValues | SaleFormValues>({
-    defaultValues:
-      type === "purchase" ? PURCHASE_DEFAULT_VALUES : SALE_DEFAULT_VALUES,
+    defaultValues,
   });
 
   const wareRef = useRef<HTMLButtonElement>(null);
@@ -54,9 +64,21 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
     setData(data);
   };
 
+  const defaultStatus = getValues("status") as PurchaseStatus;
+  let indexStatus = 0,
+    defaultTax = getValues("orderTaxRate");
+  TAX_OPTIONS.map((tax, index) => {
+    if (Object.values(tax).includes(defaultTax)) {
+      defaultTax = index;
+    }
+  });
+  STATUS_OPTIONS.map((status, index) => {
+    if (Object.values(status).includes(defaultStatus)) indexStatus = index;
+  });
+
   useEffect(() => {
     register("warehouse", {
-      validate: (value) => !!value.length || "This is required.",
+      validate: (value) => !!value.name.length || "This is required.",
     });
     register("items", {
       validate: (value) => value > 0 || "This is required.",
@@ -85,6 +107,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
         <div>
           <label htmlFor="warehouse">Warehouse:*</label>
           <AutoSelect
+            setDefaultValue={getValues("warehouse")}
             name="warehouse"
             keyName="allWarehouses"
             title="Select Warehouse..."
@@ -99,6 +122,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
             <div>
               <label htmlFor="supplier">Supplier:</label>
               <AutoSelect
+                setDefaultValue={getValues("supplier")}
                 name="supplier"
                 keyName="allSuppliers"
                 title="Select Supplier..."
@@ -114,6 +138,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
                 onChange={(e) => handlePurchaseSataus(e)}
                 options={STATUS_OPTIONS}
                 placeholder="Select Status..."
+                defaultValue={STATUS_OPTIONS[indexStatus]}
               />
             </div>
           </>
@@ -162,7 +187,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
           status={status}
           setValue={setValue}
         >
-          {variant && (
+          {(variant || action === "update") && (
             <Fields
               {...{
                 control,
@@ -171,6 +196,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
                 setValue,
                 variant,
                 status,
+                action,
               }}
             />
           )}
@@ -186,6 +212,7 @@ export const Invoice = ({ type, setData, header }: InvoiceProps) => {
               onChange={(option) =>
                 setValue("orderTaxRate", option?.value || 0)
               }
+              defaultValue={TAX_OPTIONS[defaultTax || 0]}
             />
           </div>
           <div className="flex flex-col">

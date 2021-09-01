@@ -1,4 +1,5 @@
 import { DocumentNode } from "@apollo/client";
+import { useState } from "react";
 import { useEffect } from "react";
 import {
   usePagination,
@@ -23,6 +24,7 @@ interface TableProps {
   setData: Function;
   name: string;
   type: "SERVER" | "CLIENT";
+  dataType: "sale" | "purchase"
 }
 
 export const Table = ({
@@ -36,7 +38,9 @@ export const Table = ({
   setData,
   name,
   type,
+  dataType,
 }: TableProps) => {
+  const [drop, setDrop] = useState(false)
   const {
     getTableProps,
     getTableBodyProps,
@@ -53,7 +57,10 @@ export const Table = ({
     previousPage,
     setPageSize,
     selectedFlatRows,
+    setHiddenColumns,
     setGlobalFilter,
+    allColumns,
+    getToggleHideAllColumnsProps,
     state: { pageIndex, pageSize, selectedRowIds, globalFilter },
   } = useTable(
     {
@@ -105,7 +112,7 @@ export const Table = ({
           // eslint-disable-next-line react/display-name
           Cell: ({ row }) => (
             <div>
-              <Action id={row.id} actions={["VIEW", "EDIT"]} />
+              <Action dataType={dataType} id={row.values["id"]} actions={["VIEW", "EDIT"]} />
             </div>
           ),
         },
@@ -113,9 +120,12 @@ export const Table = ({
     }
   );
 
+  
   useEffect(() => {
+    setHiddenColumns(['id'])
+    console.log(selectedRowIds);
     if (type === "SERVER") fetchData({ pageIndex, pageSize });
-  }, [fetchData, pageIndex, pageSize, type]);
+  }, [fetchData, pageIndex, pageSize, selectedRowIds, setHiddenColumns, type]);
   return (
     <div className="mx-5 mt-4">
       <div className="flex flex-row justify-between">
@@ -143,6 +153,23 @@ export const Table = ({
           type={type}
         />
         <div>export options</div>
+        <div>
+          <div>
+            <IndeterminateCheckbox {...getToggleHideAllColumnsProps({"onChange": () => setDrop(!drop)})} /> columns
+          </div>
+          {drop && allColumns.map((column) => (
+            <div key={column.id}>
+              {column.id !== "id" &&
+                column.id !== "selection" &&
+                column.id !== "action" && (
+                  <label>
+                    <input type="checkbox" {...column.getToggleHiddenProps(false)} />{" "}
+                    {column.id}
+                  </label>
+                )}
+            </div>
+          ))}
+        </div>
       </div>
       {loading && <p>Loading...</p>}
       <table

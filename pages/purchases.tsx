@@ -42,6 +42,10 @@ const Purchase = () => {
   const columns = useMemo(
     () => [
       {
+        Header: "Id",
+        accessor: "id",
+      },
+      {
         Header: "Date",
         accessor: "created_at",
         Cell: ({ value }: any) => {
@@ -94,7 +98,7 @@ const Purchase = () => {
   if (countLoading) return <p>Loading...</p>;
   return (
     <div>
-      <Button href="/add-purchases">+ Add Purchase</Button>
+      <Button href="/add-purchase">+ Add Purchase</Button>
       <Button href="#">
         <span className="inline-block mr-2">{documents}</span>Import Purchase
       </Button>
@@ -112,6 +116,7 @@ const Purchase = () => {
         type={
           purchasesCount < CLIENT_SIDE_FILTERING_LIMIT ? "CLIENT" : "SERVER"
         }
+        dataType="purchase"
       />
     </div>
   );

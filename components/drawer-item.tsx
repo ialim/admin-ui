@@ -5,6 +5,7 @@ export interface DrawerItemProps {
   children: React.ReactNode;
   type: "button" | "link";
   handleClick?: () => void;
+  query?: string;
 }
 
 export const DrawerItem = ({
@@ -13,6 +14,7 @@ export const DrawerItem = ({
   children,
   type,
   handleClick,
+  query,
 }: DrawerItemProps) => {
   return (
     <li
@@ -21,7 +23,9 @@ export const DrawerItem = ({
       }`}
     >
       {type === "link" && (
-        <Link href={`${href}`}>
+        <Link
+          href={query ? { pathname: href, query: { id: query } } : `${href}`}
+        >
           <a className="flex flex-row">{children}</a>
         </Link>
       )}

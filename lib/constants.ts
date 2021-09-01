@@ -114,8 +114,8 @@ export const HEADERS = [
 ];
 
 export const PURCHASE_DEFAULT_VALUES = {
-  warehouse: "ware",
-  supplier: "supp",
+  warehouse: {id:"", name:""},
+  supplier: {id:"", name:""},
   status: "pending",
   variants: [],
   items: 0,

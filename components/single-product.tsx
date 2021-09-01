@@ -1,6 +1,4 @@
-import { gql, useMutation, useQuery } from "@apollo/client";
-import Router from "next/router";
-import { Button } from "./button";
+import { gql, useQuery } from "@apollo/client";
 import { ErrorMessage } from "./error-message";
 import Modal from "react-modal";
 import { useState } from "react";

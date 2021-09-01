@@ -2,6 +2,7 @@ import { DocumentNode } from "@apollo/client";
 import { useEffect } from "react";
 import { forwardRef, useState } from "react";
 import { SVG } from "../public/svg";
+import { queryOption } from "../types/types";
 import { QuerySelection } from "./query-selection";
 
 type ButtonProps = JSX.IntrinsicElements["button"];
@@ -11,12 +12,13 @@ type AutoSelectProps = {
   title: string;
   keyName: string;
   setValue: any;
+  setDefaultValue?: queryOption;
 } & ButtonProps;
 
 export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
-  ({ searchQuery, title, keyName, setValue, name, ...rest }, ref) => {
+  ({ searchQuery, title, keyName, setValue, name, setDefaultValue, ...rest }, ref) => {
     const [drop, setDrop] = useState(false);
-    const [selelected, setSelected] = useState({id:"", name:""});
+    const [selelected, setSelected] = useState(setDefaultValue);
     const [allItems, setAllItems] = useState([]);
     const [inputItems, setInputItems] = useState([]);
     const { down } = SVG;
@@ -27,7 +29,7 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
 
     useEffect(() => {
       if (drop === false) {
-        setValue(name, selelected?.id);
+        setValue(name, selelected);
       }
     }, [drop, name, selelected, setValue]);
 
@@ -41,7 +43,7 @@ export const AutoSelect = forwardRef<HTMLButtonElement, AutoSelectProps>(
           ref={ref}
           type="button"
         >
-          {selelected.name ? (
+          {selelected?.name ? (
             <span className="text-left text-indigo-800">{selelected.name}</span>
           ) : (
             <span className="text-left">{title}</span>

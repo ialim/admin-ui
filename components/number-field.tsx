@@ -5,6 +5,7 @@ interface NumberFieldProps {
   index: number;
   setValue: Function;
   register: Function;
+  initialValue: number;
 }
 
 export const NumberField = ({
@@ -12,9 +13,10 @@ export const NumberField = ({
   setValue,
   index,
   register,
+  initialValue,
 }: NumberFieldProps) => {
   const [isEditing, setIsEditting] = useState(false);
-  const [value, giveValue] = useState("");
+  const [value, giveValue] = useState(initialValue || "");
 
   const onChange = (event: any) => {
     giveValue(event.target.value);

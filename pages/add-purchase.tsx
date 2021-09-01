@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Invoice } from "../components/invoice";
+import { PURCHASE_DEFAULT_VALUES } from "../lib/constants";
 import {
   formatCreatePurchaseData,
   formatVariantStockUpdateData,
@@ -89,7 +90,15 @@ const AddPurchase = () => {
       runPurchaseEffect(data);
     }
   }, [data, runPurchaseEffect]);
-  return <Invoice header="Add Purchase" type="purchase" setData={setData} />;
+  return (
+    <Invoice
+      header="Add Purchase"
+      type="purchase"
+      setData={setData}
+      defaultValues={PURCHASE_DEFAULT_VALUES}
+      action="create"
+    />
+  );
 };
 
 export default AddPurchase;
