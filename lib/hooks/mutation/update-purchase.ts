@@ -16,12 +16,11 @@ const UPDATE_PURCHASE_MUTATION = gql`
     $invoice: Upload
     $status: String
     $user: UserWhereUniqueInput
-    $product_purchases: [ProductPurchaseCreateInput]
     $supplier: SupplierWhereUniqueInput
     $warehouse: WarehouseWhereUniqueInput
     $notes: String
   ) {
-    createPurchase(
+    updatePurchase(
       id: $id
       data: {
         reference_no: $reference_no
@@ -37,7 +36,6 @@ const UPDATE_PURCHASE_MUTATION = gql`
         invoice: { upload: $invoice }
         status: $status
         user: { connect: $user }
-        product_purchases: { create: $product_purchases }
         supplier: { connect: $supplier }
         warehouse: { connect: $warehouse }
         notes: $notes

@@ -18,9 +18,18 @@ interface FieldProps {
   action: "create" | "update";
 }
 
-type WatchValues = { index: number , initialValues?: any;} & Pick<FieldProps, "setValue" | "control">;
+type WatchValues = { index: number; initialValues?: any } & Pick<
+  FieldProps,
+  "setValue" | "control" | "action"
+>;
 
-const GetWatchValues = ({ index, control, setValue, initialValues}: WatchValues) => {
+const GetWatchValues = ({
+  index,
+  control,
+  setValue,
+  initialValues,
+  action,
+}: WatchValues) => {
   const [variants] = useWatch({
     control,
     name: ["variants"],
@@ -28,15 +37,32 @@ const GetWatchValues = ({ index, control, setValue, initialValues}: WatchValues)
 
   const { quantity, cost, discount, received } = variants[index];
 
-  initialValues && initialValues[index]?.received + received <= quantity
-
   console.log(quantity, cost, discount);
   const [tax, subTotal] = calcNetTotal(quantity, cost, discount);
 
   useEffect(() => {
+    if (action === "create" && received > quantity) {
+      alert("Received value cannot be greater than the expected quantity");
+    }
+    if (
+      action === "update" &&
+      initialValues &&
+      initialValues[index]?.received + received > quantity
+    ) {
+      alert("Received value cannot be greater than the expected quantity");
+    }
     setValue(`variants.${index}.tax`, tax);
     setValue(`variants.${index}.total`, subTotal);
-  }, [index, setValue, subTotal, tax]);
+  }, [
+    action,
+    index,
+    initialValues,
+    quantity,
+    received,
+    setValue,
+    subTotal,
+    tax,
+  ]);
 
   return (
     <>
@@ -174,11 +200,12 @@ export const Fields = ({
               Math.ceil(Math.random() * 100000)}
           </td>
           <td className="pr-5">
-            <input
-              className="bg-gray-100 text-center w-48"
-              type="text"
-              {...register(`variants.${index}.barcode`, {})}
-              defaultValue={0}
+            <NumberField
+              initialValue={Number(initialFieldValues[index]?.barcode || "")}
+              name="barcode"
+              register={register}
+              setValue={setValue}
+              index={index}
             />
           </td>
           <td className="pr-5">
@@ -200,6 +227,7 @@ export const Fields = ({
                 register={register}
                 setValue={setValue}
                 index={index}
+                max={getValues(`variants.${index}.quantity`)}
               />
             </td>
           ) : null}
@@ -221,7 +249,13 @@ export const Fields = ({
               index={index}
             />
           </td>
-          <GetWatchValues index={index} control={control} setValue={setValue} initialValues={initialFieldValues}/>
+          <GetWatchValues
+            index={index}
+            control={control}
+            setValue={setValue}
+            initialValues={initialFieldValues}
+            action={action}
+          />
           <td className="text-center">
             <button
               className="px-3 py-2 rounded-md bg-red-600 text-center font-semibold text-sm text-white"

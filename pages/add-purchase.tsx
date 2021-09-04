@@ -1,3 +1,4 @@
+import { ApolloError } from "@apollo/client";
 import { useState, useEffect, useCallback } from "react";
 import { Invoice } from "../components/invoice";
 import { PURCHASE_DEFAULT_VALUES } from "../lib/constants";
@@ -27,7 +28,7 @@ const AddPurchase = () => {
       try {
         const res = await createPurchase({ variables: createPurchaseInput });
         return { type: "create purchase", ok: true, data: res.data };
-      } catch (error) {
+      } catch (error: any) {
         return { type: "create purchase", ok: false, error };
       }
     },
@@ -44,7 +45,7 @@ const AddPurchase = () => {
           variables: { updateVariantStockInput },
         });
         return { type: "update variant stock", ok: true, data: res.data };
-      } catch (error) {
+      } catch (error: any) {
         return { type: "update variant stock", ok: false, error };
       }
     },

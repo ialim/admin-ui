@@ -116,6 +116,7 @@ type ProductPurchase = {
   discount: number;
   cost: number;
   total: number;
+  purchase?: { connect: UniqueIdInput };
 };
 
 type UpdateProductPurchase = { data: Partial<ProductPurchase>; id: string };
@@ -174,3 +175,7 @@ type Message = {
   data?: any;
   error?: ApolloError;
 };
+
+type CreateProductPurchaseInput = {
+  data: ProductPurchase;
+}

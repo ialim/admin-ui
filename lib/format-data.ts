@@ -1,4 +1,5 @@
 import {
+  CreateProductPurchaseInput,
   CreatePurchaseInput,
   ProductPurchase,
   PurchaseFormValues,
@@ -252,7 +253,7 @@ export const formatUpdatePurchaseData = (
       ...(grandTotal !== updateData.grandTotal && {
         grand_total: Math.round(updateData.grandTotal * 100),
       }),
-      ...(invoice.length && { invoice: invoice[0] }),
+      ...(invoice?.length && { invoice: invoice[0] }),
       ...(status !== updateData.status && { status: updateData.status }),
       ...(warehouse.id !== updateData.warehouse.id && {
         warehouse: { id: updateData.warehouse.id },
@@ -265,8 +266,8 @@ export const formatUpdatePurchaseData = (
     },
   };
 
-  let updateProductPurchaseInput: UpdateProductPurchase[] = [];
-  let createProductPurchaseInput: ProductPurchase[] = [];
+  let updateProductPurchasesInput: UpdateProductPurchase[] = [];
+  let createProductPurchasesInput: CreateProductPurchaseInput[] = [];
 
   updateData.variants.map((variant, index) => {
     const { barcode, sku, quantity, cost, total, id, received, tax, discount } =
@@ -274,17 +275,17 @@ export const formatUpdatePurchaseData = (
 
     // Update existing product if there are any changes
     if (id === variants[index].id) {
-      updateProductPurchaseInput.push({
+      updateProductPurchasesInput.push({
         id,
         data: {
           ...(barcode !== variants[index].barcode && { barcode }),
           ...(quantity !== variants[index].quantity && { quantity }),
           ...(received !== variants[index].received && {
             received:
-              status === "ordered" || status === "pending"
+              updateData.status === "ordered" || updateData.status === "pending"
                 ? 0
-                : status === "partial"
-                ? received + variants[index].received
+                : updateData.status === "partial"
+                ? received
                 : quantity,
           }),
           ...(cost !== variants[index].cost && {
@@ -306,29 +307,32 @@ export const formatUpdatePurchaseData = (
       let time = new Date();
       let second = time.toLocaleDateString().replace(/\//g, "");
       let sku_u = `${supplier.id}-${warehouse.id}-${second}-${barcode}`;
-      createProductPurchaseInput.push({
-        barcode,
-        variant: { connect: { id } },
-        sku: sku_u,
-        quantity,
-        received:
-          status === "ordered" || status === "pending"
-            ? 0
-            : status === "partial"
-            ? received
-            : quantity,
-        tax: Math.round(tax * 100),
-        discount: Math.round(discount * 100),
-        cost: Math.round(cost * 100),
-        total: Math.round(total * 100),
+      createProductPurchasesInput.push({
+        data: {
+          barcode,
+          variant: { connect: { id } },
+          sku: sku_u,
+          quantity,
+          received:
+            status === "ordered" || status === "pending"
+              ? 0
+              : status === "partial"
+              ? received
+              : quantity,
+          tax: Math.round(tax * 100),
+          discount: Math.round(discount * 100),
+          cost: Math.round(cost * 100),
+          total: Math.round(total * 100),
+          purchase: { connect: { id: purchaseId } },
+        },
       });
     }
   });
 
   return {
     updatePurchaseInput,
-    updateProductPurchaseInput,
-    createProductPurchaseInput,
+    updateProductPurchasesInput,
+    createProductPurchasesInput,
   };
 };
 

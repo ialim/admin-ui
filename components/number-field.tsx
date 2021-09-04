@@ -6,6 +6,7 @@ interface NumberFieldProps {
   setValue: Function;
   register: Function;
   initialValue: number;
+  max?: number;
 }
 
 export const NumberField = ({
@@ -14,6 +15,7 @@ export const NumberField = ({
   index,
   register,
   initialValue,
+  max,
 }: NumberFieldProps) => {
   const [isEditing, setIsEditting] = useState(false);
   const [value, giveValue] = useState(initialValue || "");
@@ -24,6 +26,7 @@ export const NumberField = ({
   };
 
   const toCurrency = (number: any) => {
+      if(name === "barcode") return number;
     const formatter = new Intl.NumberFormat("yo-NG", {
       style: "decimal",
       currency: "NGN",
@@ -39,8 +42,10 @@ export const NumberField = ({
   };
 
   useEffect(() => {
-    register(`variants.${index}.${name}`);
-  }, [index, name, register]);
+    register(`variants.${index}.${name}`, {
+      ...(max && { validate: (value: number) => value <= max }),
+    });
+  }, [index, max, name, register]);
 
   return (
     <div>
@@ -51,7 +56,8 @@ export const NumberField = ({
           value={value}
           onChange={onChange}
           onBlur={toggleEditing}
-          className="bg-gray-100 text-center w-48"
+          className={`bg-gray-100 text-center w-48 ${max && Number(value) > max && "border-red-600 border-2" }`}
+          max={max}
         />
       ) : (
         <input
@@ -60,7 +66,7 @@ export const NumberField = ({
           value={toCurrency(value)}
           onFocus={toggleEditing}
           readOnly
-          className="bg-gray-100 text-center w-48"
+          className={`bg-gray-100 text-center w-48 ${max && Number(value) > max && "border-red-600 border-2" }`}
         />
       )}
     </div>
