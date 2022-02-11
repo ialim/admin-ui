@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { SVG } from "../svg";
+import { SVG } from "../public/svg";
 import { Nav } from "./nav";
 import { NavItem } from "./nav-item";
 

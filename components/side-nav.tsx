@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SVG } from "../svg";
+import { SVG } from "../public/svg";
 import { Drawer } from "./drawer";
 import { DrawerItem } from "./drawer-item";
 import { Dropdown } from "./dropdown";
@@ -40,9 +40,9 @@ export const SideNav = () => {
       {catalogDrop && (
         <Dropdown>
           <DropdownItem type="button" href="/products">Products</DropdownItem>
-          <DropdownItem type="button">Facets</DropdownItem>
-          <DropdownItem type="button">Collections</DropdownItem>
-          <DropdownItem type="button">Assets</DropdownItem>
+          <DropdownItem type="button" href="/facets">Facets</DropdownItem>
+          <DropdownItem type="button" href="/collections">Collections</DropdownItem>
+          <DropdownItem type="button" href="/assets">Assets</DropdownItem>
         </Dropdown>
       )}
       <DrawerItem type="button" handleClick={handlePurchaseClick}>
@@ -55,8 +55,8 @@ export const SideNav = () => {
       </DrawerItem>
       {purchaseDrop && (
         <Dropdown>
-          <DropdownItem type="button">Purchase List</DropdownItem>
-          <DropdownItem type="button">Add Purchase</DropdownItem>
+          <DropdownItem type="button" href="/purchases">Purchase List</DropdownItem>
+          <DropdownItem type="button" href="/add-purchase">Add Purchase</DropdownItem>
           <DropdownItem type="button">Import Purchase By CSV</DropdownItem>
         </Dropdown>
       )}
@@ -71,7 +71,7 @@ export const SideNav = () => {
       {saleDrop && (
         <Dropdown>
           <DropdownItem type="button">Sale List</DropdownItem>
-          <DropdownItem type="button">Add Sale</DropdownItem>
+          <DropdownItem type="button" href="/add-sale">Add Sale</DropdownItem>
           <DropdownItem type="button">Import Sale By CSV</DropdownItem>
         </Dropdown>
       )}

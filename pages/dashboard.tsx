@@ -1,6 +1,6 @@
 import { Overview } from "../components/overview";
 import { OverviewItem } from "../components/overview-item";
-import { SVG } from "../svg";
+import { SVG } from "../public/svg";
 
 const Dashboard = () => {
   const { barChart, database, shoppingCart } = SVG;
