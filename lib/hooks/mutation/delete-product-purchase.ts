@@ -1,7 +1,7 @@
 import { gql, useMutation } from "@apollo/client";
 
 const DELETE_PRODUCT_PURCHASE_MUTATION = gql`
-  mutation DELETE_PRODUCT_PURCHASE_MUTATION($productPurchaseId: ID) {
+  mutation DELETE_PRODUCT_PURCHASE_MUTATION($productPurchaseId: ID!) {
     deleteProductPurchase(id: $productPurchaseId) {
       id
       cost

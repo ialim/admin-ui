@@ -26,9 +26,9 @@ export const Action = ({ actions, id, dataType }: ActionProps) => {
         {drop && (
           <ul className="bg-gray-100">
             {actions?.map((action, index) => (
-              <>
+              <ul key={action}>
                 {action === "VIEW" ? (
-                  <DrawerItem key={action} type="button">
+                  <DrawerItem type="button">
                     <span className="mr-4 w-5">{eye}</span> View
                   </DrawerItem>
                 ) : (
@@ -69,7 +69,7 @@ export const Action = ({ actions, id, dataType }: ActionProps) => {
                 ) : (
                   ""
                 )}
-              </>
+              </ul>
             ))}
           </ul>
         )}

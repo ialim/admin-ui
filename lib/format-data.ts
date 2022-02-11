@@ -1,9 +1,12 @@
 import {
   CreateProductPurchaseInput,
+  CreateProductWarehouseInput,
   CreatePurchaseInput,
   ProductPurchase,
+  ProductWarehouse,
   PurchaseFormValues,
   UpdateProductPurchase,
+  UpdateProductWarehouseInput,
   UpdatePurchaseInput,
   UpdateVariantStockInput,
 } from "../types/types";
@@ -11,11 +14,12 @@ import {
 export const formatCreatePurchaseData = (
   data: PurchaseFormValues,
   user: string
-): CreatePurchaseInput => {
+) => {
   let time = new Date();
   let first = time.getTime().toString().slice(5, 10);
   let second = time.toLocaleDateString().replace(/\//g, "");
   let product_purchases: ProductPurchase[] = [];
+  let productWarehouseInput: ProductWarehouse[] = [];
 
   const reference_no = `pr-${first}-${second}`;
   const {
@@ -55,6 +59,12 @@ export const formatCreatePurchaseData = (
       cost: Math.round(cost * 100),
       total: Math.round(total * 100),
     });
+
+    productWarehouseInput.push({
+      warehouse: { connect: { id: warehouse.id } },
+      quantity: received,
+      variant: { connect: { id } },
+    });
   });
 
   // create prodeuct purchase record
@@ -78,14 +88,20 @@ export const formatCreatePurchaseData = (
     notes,
   };
 
-  return createPurchaseInput;
+  const variantIds = data.variants.map((variant) => variant.id);
+
+  return { createPurchaseInput, productWarehouseInput, variantIds, warehouse };
 };
 
-export const formatVariantStockUpdateData = (data: any) => {
+export const formatVariantStockUpdateData = (
+  data: any[],
+  initialData?: PurchaseFormValues
+) => {
   const updateVariantStockInput: UpdateVariantStockInput[] = [];
-  const {
-    createPurchase: { product_purchases },
-  } = data;
+  const product_purchases = data;
+  const variants = initialData?.variants;
+
+  const variantIds = variants?.map((variant) => variant.id);
 
   product_purchases.map((productPurchase: any) => {
     const {
@@ -101,6 +117,16 @@ export const formatVariantStockUpdateData = (data: any) => {
         totalPurchased,
       },
     } = productPurchase;
+
+    const prevReceived =
+      variantIds?.includes(id) && variants
+        ? variants[variantIds?.indexOf(id)]?.received
+        : 0;
+
+    const prevQuantity =
+      variantIds?.includes(id) && variants
+        ? variants[variantIds?.indexOf(id)]?.quantity
+        : 0;
 
     let notNull = [
       allocated,
@@ -122,15 +148,27 @@ export const formatVariantStockUpdateData = (data: any) => {
     updateVariantStockInput.push({
       id,
       data: {
-        sellable: _stockOnHand + received - _allocated - _outOfStockThreshold,
-        stockOnHand: _stockOnHand + received,
+        sellable:
+          _stockOnHand +
+          received -
+          _allocated -
+          _outOfStockThreshold -
+          prevReceived,
+        stockOnHand: _stockOnHand + received - prevReceived,
         outOfStockThreshold: _outOfStockThreshold,
         lastCostPrice: cost,
-        totalPurchased: _totalPurchased + quantity,
+        totalPurchased: _totalPurchased + quantity - prevQuantity,
         isAvailable:
-          _stockOnHand + received - outOfStockThreshold > 0 ? true : false,
+          _stockOnHand + received - outOfStockThreshold - prevReceived > 0
+            ? true
+            : false,
         isSellable:
-          _stockOnHand + received - _allocated - _outOfStockThreshold > 0
+          _stockOnHand +
+            received -
+            _allocated -
+            _outOfStockThreshold -
+            prevReceived >
+          0
             ? true
             : false,
       },
@@ -173,33 +211,35 @@ export const updateDefaultValues = (data: any) => {
     status,
     warehouse,
     supplier,
-    variants: product_purchases.map((product_purchase: any) => {
-      const {
-        id: productPurchaseId,
-        cost,
-        barcode,
-        sku,
-        variant: { id, itemcode, name },
-        quantity,
-        received,
-        total,
-        discount,
-        tax,
-      } = product_purchase;
-      return {
-        cost: cost / 100,
-        barcode,
-        sku: `${productPurchaseId}-${sku}`,
-        id,
-        itemcode,
-        name,
-        quantity,
-        received,
-        total: total / 100,
-        discount: discount / 100,
-        tax: tax / 100,
-      };
-    }),
+    variants: product_purchases.length
+      ? product_purchases.map((product_purchase: any) => {
+          const {
+            id: productPurchaseId,
+            cost,
+            barcode,
+            sku,
+            variant: { id, itemcode, name },
+            quantity,
+            received,
+            total,
+            discount,
+            tax,
+          } = product_purchase;
+          return {
+            cost: cost / 100,
+            barcode,
+            sku: `${productPurchaseId}-${sku}`,
+            id,
+            itemcode,
+            name,
+            quantity,
+            received,
+            total: total / 100,
+            discount: discount / 100,
+            tax: tax / 100,
+          };
+        })
+      : [],
   };
   return { defaultValues, user };
 };
@@ -227,7 +267,10 @@ export const formatUpdatePurchaseData = (
     invoice,
   } = intialValues;
 
-  // update existing purchase information is necessary
+  // initial variant information 
+  const initialVariantIds = variants.map((variant) => variant.id);
+
+  // update existing purchase information if necessary
   const updatePurchaseInput: UpdatePurchaseInput = {
     id: purchaseId,
     data: {
@@ -255,11 +298,11 @@ export const formatUpdatePurchaseData = (
       }),
       ...(invoice?.length && { invoice: invoice[0] }),
       ...(status !== updateData.status && { status: updateData.status }),
-      ...(warehouse.id !== updateData.warehouse.id && {
-        warehouse: { id: updateData.warehouse.id },
+      ...(warehouse.id !== updateData.warehouse?.id && {
+        warehouse: { id: updateData.warehouse?.id },
       }),
-      ...(supplier.id !== updateData.supplier.id && {
-        supplier: { id: updateData.supplier.id },
+      ...(supplier.id !== updateData.supplier?.id && {
+        supplier: { id: updateData.supplier?.id },
       }),
       ...(notes !== updateData.notes && { notes: updateData.notes }),
       ...(user && { user: { id: user } }),
@@ -269,25 +312,24 @@ export const formatUpdatePurchaseData = (
   let updateProductPurchasesInput: UpdateProductPurchase[] = [];
   let createProductPurchasesInput: CreateProductPurchaseInput[] = [];
 
-  updateData.variants.map((variant, index) => {
+  updateData.variants.map((variant) => {
     const { barcode, sku, quantity, cost, total, id, received, tax, discount } =
       variant;
 
     // Update existing product if there are any changes
-    if (id === variants[index].id) {
+    if (initialVariantIds.includes(id)) {
+      const index = initialVariantIds.indexOf(id)
       updateProductPurchasesInput.push({
-        id,
+        id: sku.split("-")[0],
         data: {
           ...(barcode !== variants[index].barcode && { barcode }),
           ...(quantity !== variants[index].quantity && { quantity }),
-          ...(received !== variants[index].received && {
-            received:
-              updateData.status === "ordered" || updateData.status === "pending"
-                ? 0
-                : updateData.status === "partial"
-                ? received
-                : quantity,
-          }),
+          received:
+            updateData.status === "ordered" || updateData.status === "pending"
+              ? 0
+              : updateData.status === "partial"
+              ? received
+              : quantity,
           ...(cost !== variants[index].cost && {
             cost: Math.round(cost * 100),
           }),
@@ -303,7 +345,7 @@ export const formatUpdatePurchaseData = (
     }
 
     // create newly added product if there are any
-    if (id !== variants[index].id) {
+    if (!initialVariantIds.includes(id)) {
       let time = new Date();
       let second = time.toLocaleDateString().replace(/\//g, "");
       let sku_u = `${supplier.id}-${warehouse.id}-${second}-${barcode}`;
@@ -329,10 +371,13 @@ export const formatUpdatePurchaseData = (
     }
   });
 
+  const variantIds = updateData.variants.map((variant) => variant.id);
+
   return {
     updatePurchaseInput,
     updateProductPurchasesInput,
     createProductPurchasesInput,
+    variantIds,
   };
 };
 
@@ -367,4 +412,102 @@ export const formatUpdateVariantStockOnDelete = (data: any) => {
     },
   };
   return updateVariantStockInput;
+};
+
+export const formatProductWarehouseData = (
+  initialWarehouseVariants: any[],
+  purchaseWarehouseVariants: ProductWarehouse[]
+) => {
+  let updateWarehouseProductsInput: UpdateProductWarehouseInput[] = [];
+  let createWarehouseProductsInput: CreateProductWarehouseInput[] = [];
+  let variantIds: string[] = [];
+  if (initialWarehouseVariants?.length) {
+    initialWarehouseVariants.map((warehouseVariant) => {
+      variantIds.push(warehouseVariant.variant.id);
+    });
+
+    purchaseWarehouseVariants.map((purchaseWarehouseVariant) => {
+      variantIds.includes(purchaseWarehouseVariant.variant.connect.id)
+        ? updateWarehouseProductsInput.push({
+            id: initialWarehouseVariants[
+              variantIds.indexOf(purchaseWarehouseVariant.variant.connect.id)
+            ].id,
+            data: {
+              quantity:
+                purchaseWarehouseVariant.quantity +
+                initialWarehouseVariants[
+                  variantIds.indexOf(
+                    purchaseWarehouseVariant.variant.connect.id
+                  )
+                ].quantity,
+            },
+          })
+        : createWarehouseProductsInput.push({ data: purchaseWarehouseVariant });
+    });
+  } else {
+    purchaseWarehouseVariants.map((purchaseWarehouseVariant) => {
+      createWarehouseProductsInput.push({ data: purchaseWarehouseVariant });
+    });
+  }
+  return { createWarehouseProductsInput, updateWarehouseProductsInput };
+};
+
+export const formatUpdatePurchaseWarehouseData = (
+  updateData: PurchaseFormValues,
+  intialValues: PurchaseFormValues,
+  initialWarehouseVariants: any[]
+) => {
+  let rollBackUpdateProductWarehouse: UpdateProductWarehouseInput[] = [];
+  if (updateData.warehouse.id !== intialValues.warehouse.id) {
+    const varinatIds = initialWarehouseVariants.map((warehouseVariant) => {
+      return warehouseVariant.variant.id;
+    });
+    intialValues.variants.map((variant) => {
+      const { received, id } = variant;
+      rollBackUpdateProductWarehouse.push({
+        id: initialWarehouseVariants[varinatIds.indexOf(id)].id,
+        data: {
+          quantity:
+            initialWarehouseVariants[varinatIds.indexOf(id)].quantity -
+            received,
+        },
+      });
+    });
+  }
+
+  const varinatIds = intialValues.variants.map((variant) => variant.id);
+  const {
+    variants,
+    warehouse: { id: warehouseId },
+    status,
+  } = updateData;
+  const productWarehouseInput = variants.map((variant) => {
+    const { received, id: variantId, quantity } = variant;
+    let newReceived =
+      status === "ordered" || status === "pending"
+        ? 0
+        : status === "partial"
+        ? received
+        : quantity;
+    return {
+      warehouse: { connect: { id: warehouseId } },
+      ...(varinatIds.includes(variantId)
+        ? {
+            quantity:
+              newReceived -
+              intialValues.variants[varinatIds.indexOf(variantId)].received,
+          }
+        : { quantity: newReceived }),
+      variant: { connect: { id: variantId } },
+    };
+  });
+
+  const { createWarehouseProductsInput, updateWarehouseProductsInput } =
+    formatProductWarehouseData(initialWarehouseVariants, productWarehouseInput);
+
+  return {
+    rollBackUpdateProductWarehouse,
+    createWarehouseProductsInput,
+    updateWarehouseProductsInput,
+  };
 };

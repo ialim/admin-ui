@@ -1,46 +1,8 @@
 import { gql, useMutation } from "@apollo/client";
 
 const UPDATE_PURCHASE_MUTATION = gql`
-  mutation UPDATE_PURCHASE_MUTATION(
-    $id: ID
-    $reference_no: String
-    $item: Int
-    $total_qty: Int
-    $total_discount: Int
-    $total_cost: Int
-    $total_tax: Int
-    $tax_rate: Int
-    $shipping_cost: Int
-    $grand_total: Int
-    $paid_amount: Int
-    $invoice: Upload
-    $status: String
-    $user: UserWhereUniqueInput
-    $supplier: SupplierWhereUniqueInput
-    $warehouse: WarehouseWhereUniqueInput
-    $notes: String
-  ) {
-    updatePurchase(
-      id: $id
-      data: {
-        reference_no: $reference_no
-        item: $item
-        total_qty: $total_qty
-        total_discount: $total_discount
-        total_cost: $total_cost
-        total_tax: $total_tax
-        tax_rate: $tax_rate
-        shipping_cost: $shipping_cost
-        grand_total: $grand_total
-        paid_amount: $paid_amount
-        invoice: { upload: $invoice }
-        status: $status
-        user: { connect: $user }
-        supplier: { connect: $supplier }
-        warehouse: { connect: $warehouse }
-        notes: $notes
-      }
-    ) {
+  mutation UPDATE_PURCHASE_MUTATION($id: ID!, $data: PurchaseUpdateInput) {
+    updatePurchase(id: $id, data: $data) {
       id
       product_purchases {
         cost

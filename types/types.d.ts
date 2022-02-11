@@ -178,4 +178,17 @@ type Message = {
 
 type CreateProductPurchaseInput = {
   data: ProductPurchase;
-}
+};
+
+type ProductWarehouse = Pick<ProductPurchase, "quantity" | "variant"> & {
+  warehouse: { connect: UniqueIdInput };
+};
+
+type UpdateProductWarehouseInput = {
+  id: string;
+  data: Partial<ProductWarehouse>;
+};
+
+type CreateProductWarehouseInput = {
+  data: ProductWarehouse;
+};

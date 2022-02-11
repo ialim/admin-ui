@@ -1,12 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useEffect } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import { calcNetTotal } from "../lib/basicCalculattions";
-import { formatUpdateVariantStockOnDelete } from "../lib/format-data";
 import { formatValue } from "../lib/format-value";
-import { useDeleteProductPurchaseMutation } from "../lib/hooks/mutation/delete-product-purchase";
-import { useUpdateSingleVariantStockMutation } from "../lib/hooks/mutation/update-variant";
-import { Message, UpdateVariantStockInput } from "../types/types";
 import { NumberField } from "./number-field";
 interface FieldProps {
   control: any;
@@ -16,6 +12,7 @@ interface FieldProps {
   variant: any;
   status: string;
   action: "create" | "update";
+  setDeleteProductPurchaseIds?: Function;
 }
 
 type WatchValues = { index: number; initialValues?: any } & Pick<
@@ -88,81 +85,19 @@ export const Fields = ({
   variant,
   status,
   action,
+  setDeleteProductPurchaseIds,
 }: FieldProps) => {
-  let initialFieldValues: any = [];
   const { fields, append, remove } = useFieldArray({
     control,
     name: "variants",
   });
 
-  const [deleteProductPurchase, deleteResult] =
-    useDeleteProductPurchaseMutation();
-
-  const [updateVariantStock, updateResult] =
-    useUpdateSingleVariantStockMutation();
-
-  // Grab previous values on update
-  action === "update" &&
-    (initialFieldValues = fields?.map((field) =>
-      Object.fromEntries(Object.entries(field))
-    ));
-
-  const deletePurchaseProductMutation = useCallback(
-    async (productPurchaseId: string): Promise<Message> => {
-      try {
-        const res = await deleteProductPurchase({
-          variables: { id: productPurchaseId },
-        });
-        return { type: "delete product purchase", ok: true, data: res.data };
-      } catch (error) {
-        return { type: "delete product purchase", ok: false, error };
-      }
-    },
-    [deleteProductPurchase]
+  const [initialFieldValues, setInitialFieldValues] = useState<any>(() =>
+    fields?.map((field) => Object.fromEntries(Object.entries(field)))
   );
 
-  const updateSingleVariantStockMutation = useCallback(
-    async (
-      updateVariantStockInput: UpdateVariantStockInput
-    ): Promise<Message> => {
-      try {
-        const res = await updateVariantStock({
-          variables: { updateVariantStockInput },
-        });
-        return {
-          type: "update variant stock on delete",
-          ok: true,
-          data: res.data,
-        };
-      } catch (error) {
-        return { type: "update variant stock on delete", ok: false, error };
-      }
-    },
-    [updateVariantStock]
-  );
-
-  const runDeleteProductPurchaseEffect = useCallback(
-    async (id: string) => {
-      const {
-        ok,
-        type,
-        error,
-        data: deleteData,
-      } = await deletePurchaseProductMutation(id);
-
-      if (ok) {
-        const updateVariantStockInput =
-          formatUpdateVariantStockOnDelete(deleteData);
-
-        const { ok, type, error, data } =
-          await updateSingleVariantStockMutation(updateVariantStockInput);
-        ok ? console.log(type, data) : console.log(type, error?.message);
-      }
-    },
-    [deletePurchaseProductMutation, updateSingleVariantStockMutation]
-  );
-
-  const handleDelete = async (index: number) => {
+  const handleDelete = async (index: number, fieldId: string, e: any) => {
+    e.preventDefault();
     // remove from list on create
     if (action === "create") {
       remove(index);
@@ -172,20 +107,49 @@ export const Fields = ({
     if (action === "update") {
       let productPurchaseId: string;
 
-      productPurchaseId = initialFieldValues[index]?.sku.split("-")[0];
+      const initialFieldValueIds = initialFieldValues.map(
+        (value: any) => value.id
+      );
 
-      if (confirm("Are you sure you want to delete this Product Purchase")) {
-        runDeleteProductPurchaseEffect(productPurchaseId);
+      console.log(initialFieldValues, initialFieldValueIds, fieldId);
+
+      productPurchaseId =
+        initialFieldValues[initialFieldValueIds.indexOf(fieldId)]?.sku.split(
+          "-"
+        )[0];
+
+      const response = confirm(
+        "Are you sure you want to delete this Product Purchase"
+      )
+        ? true
+        : false;
+      if (response) {
         remove(index);
+        initialFieldValues.splice(initialFieldValueIds.indexOf(fieldId), 1);
+        productPurchaseId &&
+          setDeleteProductPurchaseIds &&
+          setDeleteProductPurchaseIds((arr: string[]) => [
+            ...arr,
+            productPurchaseId,
+          ]);
       }
     }
   };
 
+  const handleAlreadyExistingItem = useCallback(
+    (variant: any) => {
+      const fieldIds = fields.map((field) => field.id);
+      if (!fieldIds.includes(variant?.id)) append(variant);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [append]
+  );
+
   useEffect(() => {
     if (variant) {
-      append(variant);
+      handleAlreadyExistingItem(variant);
     }
-  }, [append, variant]);
+  }, [handleAlreadyExistingItem, variant]);
 
   return (
     <>
@@ -259,7 +223,7 @@ export const Fields = ({
           <td className="text-center">
             <button
               className="px-3 py-2 rounded-md bg-red-600 text-center font-semibold text-sm text-white"
-              onClick={() => handleDelete(index)}
+              onClick={(e) => handleDelete(index, field.id, e)}
             >
               Delete
             </button>

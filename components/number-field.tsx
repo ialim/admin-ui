@@ -22,16 +22,19 @@ export const NumberField = ({
 
   const onChange = (event: any) => {
     giveValue(event.target.value);
-    setValue(`variants.${index}.${name}`, parseInt(event.target.value));
+    setValue(
+      `variants.${index}.${name}`,
+      name === "barcode" ? event.target.value : parseInt(event.target.value)
+    );
   };
 
   const toCurrency = (number: any) => {
-      if(name === "barcode") return number;
+    if (name === "barcode") return number;
     const formatter = new Intl.NumberFormat("yo-NG", {
       style: "decimal",
       currency: "NGN",
       maximumFractionDigits: 2,
-      minimumFractionDigits: name === "quantity" ? 0 : 2,
+      minimumFractionDigits: name === "quantity" || name === "received" ? 0 : 2,
     });
 
     return formatter.format(number);
@@ -56,7 +59,9 @@ export const NumberField = ({
           value={value}
           onChange={onChange}
           onBlur={toggleEditing}
-          className={`bg-gray-100 text-center w-48 ${max && Number(value) > max && "border-red-600 border-2" }`}
+          className={`bg-gray-100 text-center w-48 ${
+            max && Number(value) > max && "border-red-600 border-2"
+          }`}
           max={max}
         />
       ) : (
@@ -66,7 +71,9 @@ export const NumberField = ({
           value={toCurrency(value)}
           onFocus={toggleEditing}
           readOnly
-          className={`bg-gray-100 text-center w-48 ${max && Number(value) > max && "border-red-600 border-2" }`}
+          className={`bg-gray-100 text-center w-48 ${
+            max && Number(value) > max && "border-red-600 border-2"
+          }`}
         />
       )}
     </div>

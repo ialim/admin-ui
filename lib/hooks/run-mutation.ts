@@ -1,28 +1,25 @@
 import { useCallback } from "react";
 import { Message } from "../../types/types";
 
-export const useRunMutationFunction = async (
+export const useRunMutationFunction = (
   mutationFunction: Function,
-  variables: any,
-  type: string
 ) => {
   const mutation = useCallback(
     async (
-      mutationFunction: Function,
       variables: any,
-      type: string
+      type: string,
     ): Promise<Message> => {
       const isArray = Array.isArray(variables);
       try {
         const res = await mutationFunction({
-          ...(isArray ? { variable: { variables } } : variables),
+          ...(isArray ? { variables: { variables } } : {variables}),
         });
-        return { type, ok: true, data: res.data };
-      } catch (error) {
+        return { type, ok: true, data: res?.data };
+      } catch (error: any) {
         return { type, ok: false, error };
       }
     },
-    []
+    [mutationFunction]
   );
-  return await mutation;
+  return mutation;
 };

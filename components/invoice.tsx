@@ -30,6 +30,7 @@ interface InvoiceProps {
   setData: Function;
   defaultValues: any;
   action: "create" | "update";
+  setDeleteProductPurchaseIds?: Function;
 }
 
 let renderCount = 0;
@@ -40,6 +41,7 @@ export const Invoice = ({
   header,
   defaultValues,
   action,
+  setDeleteProductPurchaseIds
 }: InvoiceProps) => {
   const [variant, setVariant] = useState<Variant>();
   const [status, setStatus] = useState("");
@@ -59,6 +61,7 @@ export const Invoice = ({
   const suppRef = useRef<HTMLButtonElement>(null);
   const custRef = useRef<HTMLButtonElement>(null);
   const billRef = useRef<HTMLButtonElement>(null);
+
   const onSubmit = (data: any) => {
     console.log("In Invoice: ", data);
     setData(data);
@@ -197,6 +200,7 @@ export const Invoice = ({
                 variant,
                 status,
                 action,
+                setDeleteProductPurchaseIds,
               }}
             />
           )}
